@@ -1,0 +1,64 @@
+:root{
+    --text-color: rgba(130, 13, 130, 0.5);
+}
+
+
+.dark-mode{
+    --text-color: rgba(255, 13, 13, 0.5);
+
+}
+
+body, html {
+    height: 100%;
+    margin: 0;
+}
+canvas {
+    display: block; 
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+.toggle-div{
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    transform: translate(-10%, -10%);
+    color: var(--text-color);
+    text-align: center;
+    font-family: Orbitron, 'Courier New', Courier, monospace;
+    font-size: 70%;
+    margin: 0;
+    cursor: pointer;
+}
+
+
+.theme-toggle {
+    cursor: pointer;
+}
+
+.name-block-chinese {
+    position: absolute;
+    top: 20%;
+    left: 90%;
+    transform: translate(-90%, -20%);
+    color: var(--text-color);
+    text-align: center;
+    font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
+    font-size: 170%;
+    margin: 0;
+}
+
+.name-block{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-color);
+    text-align: center;
+    font-family: Orbitron, 'Courier New', Courier, monospace;
+    font-size: 170%;
+    margin: 0;
+}
