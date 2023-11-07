@@ -1,0 +1,15 @@
+[
+    {
+      "name": "Project One",
+      "description": "This is a description for Project One.",
+      "URL": "http://example.com/project-one",
+      "technologies": ["HTML", "CSS", "JavaScript"]
+    },
+    {
+      "name": "Project Two",
+      "description": "This is a description for Project Two.",
+      "URL": "http://example.com/project-two",
+      "technologies": ["Node.js", "Express", "MongoDB"]
+    }
+]
+  
