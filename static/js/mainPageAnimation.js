@@ -163,7 +163,7 @@ function draw() {
             var dist = Math.hypot(ball.x - ball2.x, ball.y - ball2.y);
             if (dist < 100) {
                 var distM = Math.min(distMouse(ball), distMouse(ball2));
-                if(distM > 400 && window.mobileCheck){
+                if(distM > 400 && window.mobileCheck()){
                   continue;
                 }
                 ctx.globalAlpha=Math.min(0.52,distM/800);
