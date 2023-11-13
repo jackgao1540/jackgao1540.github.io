@@ -1,3 +1,54 @@
+// check for dark mode
+var darkMode = false;
+
+function setCookie(){
+  if(darkMode){
+    Cookies.set('darkMode', 'true', { expires: 7 });
+  } else{
+    Cookies.set('darkMode', 'false', { expires: 7 });
+  }
+}
+
+
+function toggleDarkMode(){
+  darkMode = !darkMode;
+  document.body.classList.toggle('dark-mode');
+  var heading = document.getElementById('theme-toggle');
+  heading.textContent = darkMode ? "Light Mode" : "Dark Mode";
+  // Re-initialize the lastTime to update the canvas immediately
+  lastTime = Date.now();
+  setCookie();
+  console.log('darkMode set to ' + Cookies.get('darkMode'));
+}
+
+console.log('cookies darkmode is ' + Cookies.get('darkMode'));
+
+// check for existing
+if(Cookies.get('darkMode'=='undefined')){
+  setCookie();
+  document.getElementById('theme-toggle').textContent="Dark Mode";
+}else{
+  var trueDark = Cookies.get('darkMode')=='true';
+  if(trueDark){
+    toggleDarkMode();
+  }else{
+    document.getElementById('theme-toggle').textContent="Dark Mode";
+  }
+  setCookie();
+}
+
+document.getElementById('theme-toggle').addEventListener('click', function() {
+  darkMode = !darkMode;
+  document.body.classList.toggle('dark-mode');
+  var heading = document.getElementById('theme-toggle');
+  heading.textContent = darkMode ? "Light Mode" : "Dark Mode";
+  // Re-initialize the lastTime to update the canvas immediately
+  lastTime = Date.now();
+  setCookie();
+  console.log('darkMode set to ' + Cookies.get('darkMode'));
+});
+
+
 fetch('static/projects/projects.json')
     .then(response => response.json())
     .then(projects => {
@@ -14,6 +65,7 @@ fetch('static/projects/projects.json')
         projectDesc.textContent = project.description;
         projectLink.href = project.URL;
         projectLink.appendChild(projectName);
+        projectLink.setAttribute("target", "_blank");
         project.technologies.forEach(tech => {
           const techItem = document.createElement('li');
           techItem.textContent = tech;

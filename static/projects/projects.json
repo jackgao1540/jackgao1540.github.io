@@ -1,15 +1,45 @@
 [
     {
-      "name": "Project One",
-      "description": "This is a description for Project One.",
-      "URL": "http://example.com/project-one",
-      "technologies": ["HTML", "CSS", "JavaScript"]
+      "name": "Terminal LLM Chatbot for PDFs",
+      "description": "Uses local LLAMA 2, pdf data extraction techniques, and Retrieval-Augmented Generation to let the user talk to a LLM about a specified PDF within the terminal, allowing the user to ask questions to the LLM and providing the LLM with snippets of the PDF based on an FAISS similarity search.",
+      "URL": "https://github.com/jackgao1540/PDF-ChatBot",
+      "technologies": ["Python", "LLAMA", "LLM", "FAISS", "Numpy"]
+    },
+   {
+      "name": "Cancer Classifying CNN",
+      "description": "Uses simple Keras models and architectures to train and validate a CNN on three types of breast cancer cells; MCF-7, MCF-10A, MDA-MB-231.",
+      "URL": "https://github.com/jackgao1540/group4DeepLearningProject",
+      "technologies": ["Keras", "sklearn", "Python", "Jupyter"]
     },
     {
-      "name": "Project Two",
-      "description": "This is a description for Project Two.",
-      "URL": "http://example.com/project-two",
-      "technologies": ["Node.js", "Express", "MongoDB"]
+      "name": "Stock Price Predicting LSTM",
+      "description": "Uses Sequential LSTM model to predict close price of TSLA stock based on past years' close price history.",
+      "URL": "https://github.com/jackgao1540/LSTM_TSLA",
+      "technologies": ["Keras", "Tensorflow", "Pandas", "Jupyter", "Python"]
+    },
+    {
+      "name": "GAN Clothing Generator",
+      "description": "Uses a Keras clothing dataset to develop a GAN to generate similar images.",
+      "URL": "https://github.com/jackgao1540/GAN-Generate-and-Denoise-Clothing-Images",
+      "technologies": ["GAN", "Encoders", "Decoders", "Machine Learning", "Python", "Tensorflow", "Keras", "sklearn"]
+    },
+    {
+      "name": "Mandelbrot Set Visualizer",
+      "description": "Uses a C++ graphics library SFML to generate a plot of the mandelbrot set at any arbitrary position and magnification of the fractal.",
+      "URL": "https://github.com/jackgao1540/mandelbrot",
+      "technologies": ["C++", "SFML"]
+    },
+    {
+      "name": "League of Legends Skillshot Dodge Simulator",
+      "description": "Uses a C++ graphics library SFML to draw a player and projectiles, detects keyboard and mouse activity to let the player warm up their mechanics by dodging skillshots and aiming at moving enemies.",
+      "URL": "https://github.com/jackgao1540/LeagueDodgeSimulator",
+      "technologies": ["C++", "SFML"]
+    },
+    {
+      "name": "Attack on Titan Video Game in Java",
+      "description": "Project for CPSC 210 at UBC. Custom program that detects collision for various collidable objects within a grid, optimizing the amount of collision checks, and uses OOP design principles learned within the course to a full extent.",
+      "URL": "https://github.com/jackgao1540/aotGame",
+      "technologies": ["Java", "UML Diagrams", "swing", "awt"]
     }
 ]
   

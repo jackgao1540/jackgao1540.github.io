@@ -1,13 +1,28 @@
 :root{
-    --text-color: rgba(170, 13, 170, 0.9);
-    --bg-color: rgba(19,19,19,.1)
+    --text-color: rgba(150, 13, 150, 0.9);
+    --bg-color: rgba(19,19,19,.1);
+    --hover-color: rgba(250, 0, 250, 1);
 }
 
 
-.dark-mode{
-    --text-color: rgba(255, 13, 13, 0.9);
+/* .dark-mode{
+    --text-color: rgba(240, 13, 13, 0.9);
     --bg-color: rgba(19,19,19,.99);
+    --hover-color: rgba(255, 240, 240, 1);
+} */
 
+.dark-mode{
+    --text-color: rgba(240, 13, 240, 0.7);
+    --bg-color: rgba(70,70,70,.99);
+    --hover-color: rgba(200, 200, 200, 1);
+}
+
+.cc{
+    margin:26%;
+    border:13%;
+}
+.cc:hover{
+    text-shadow: 0 0 20px var(--hover-color);
 }
 
 body, html {
@@ -28,47 +43,51 @@ canvas {
 
 .toggle-div{
     position: absolute;
-    top: 10%;
-    left: 10%;
-    transform: translate(-10%, -10%);
+    top:  63%;
+    left: 50%;
+    transform: translate(-50%, -63%);
     color: var(--text-color);
     text-align: center;
     font-family: Orbitron, 'Courier New', Courier, monospace;
-    font-size: 70%;
+    font-size: 60%;
     margin: 0;
     cursor: pointer;
 }
 
-
-.theme-toggle {
-    cursor: pointer;
+.toggle-div:hover{
+    color: var(--hover-color);
 }
 
+
 .portfolio-link{
-    position: absolute;
-    top: 10%;
-    left: 30%;
-    transform: translate(-30%, -10%);
-    color: var(--text-color);
+    position: absolute; 
+    top: 58%;
+    left: 50%;
+    transform: translate(-50%, -58%);
     text-align: center;
     font-family: Orbitron, 'Courier New', Courier, monospace;
     font-size: 70%;
     margin: 0;
     cursor: pointer;
     text-decoration: none;
+    color: var(--text-color);
 }
 
 .portfolio-text{
-    cursor: pointer;
-    text-decoration: none;
-    color: var(--text-color);
+    color:var(--text-color);
 }
+
+.portfolio-text:hover{
+    text-decoration: none;
+    color:var(--hover-color);
+}
+
 
 .name-block-chinese {
     position: absolute;
-    top: 20%;
+    top: 10%;
     left: 90%;
-    transform: translate(-90%, -20%);
+    transform: translate(-90%, -10%);
     color: var(--text-color);
     text-align: center;
     font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
@@ -87,11 +106,6 @@ canvas {
     font-size: 170%;
     margin: 0;
 }
-
-#animation-section{
-    margin: 0;
-}
-
 
 
 /* Hide the vertical scrollbar */
