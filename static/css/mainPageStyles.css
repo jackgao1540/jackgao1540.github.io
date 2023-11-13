@@ -42,10 +42,11 @@ canvas {
 }
 
 .toggle-div{
-    position: absolute;
+    position: relative;
+    /* position: absolute;
     top:  63%;
     left: 50%;
-    transform: translate(-50%, -63%);
+    transform: translate(-50%, -63%); */
     color: var(--text-color);
     text-align: center;
     font-family: Orbitron, 'Courier New', Courier, monospace;
@@ -58,12 +59,19 @@ canvas {
     color: var(--hover-color);
 }
 
+.container {
+    text-align: center;
+    padding-top: 40vh;
+}
+
 
 .portfolio-link{
-    position: absolute; 
-    top: 58%;
+    position: relative; 
+    /* top: 58%;
     left: 50%;
-    transform: translate(-50%, -58%);
+    transform: translate(-50%, -58%); */
+    /* margin-top: 58vh;
+    margin-left: 50vw; */
     text-align: center;
     font-family: Orbitron, 'Courier New', Courier, monospace;
     font-size: 70%;
@@ -93,18 +101,22 @@ canvas {
     font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
     font-size: 170%;
     margin: 0;
+    z-index:99;
 }
 
 .name-block{
-    position: absolute;
+    position: relative;
+    margin-bottom: 60vh;
+    /* position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%); */
     color: var(--text-color);
     text-align: center;
     font-family: Orbitron, 'Courier New', Courier, monospace;
     font-size: 170%;
     margin: 0;
+    z-index: 99;
 }
 
 
