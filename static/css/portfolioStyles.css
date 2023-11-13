@@ -26,7 +26,7 @@ body, html {
 .index-link{
     position: absolute;
     top: 10%;
-    left: 90%;
+    left: 75%;
     transform: translate(-90%, -10%);
     text-align: center;
     font-family: Orbitron, 'Courier New', Courier, monospace;
@@ -134,7 +134,7 @@ footer{
 .toggle-div{
     position: absolute;
     top:  10%;
-    left: 80%;
+    left: 50%;
     transform: translate(-80%, -10%);
     color: var(--text-color);
     text-align: center;
