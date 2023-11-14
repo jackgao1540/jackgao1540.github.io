@@ -5,6 +5,12 @@
       "URL": "https://github.com/jackgao1540/PDF-ChatBot",
       "technologies": ["Python", "LLAMA", "LLM", "FAISS", "Numpy"]
     },
+    {
+      "name": "Don Mills Online Judge Solutions",
+      "description": "Solutions for problems listed on DMOJ.ca over varying difficulty.",
+      "URL": "https://github.com/jackgao1540/dmoj-solutions",
+      "technologies": ["C++"]
+    },
    {
       "name": "Cancer Classifying CNN",
       "description": "Uses simple Keras models and architectures to train and validate a CNN on three types of breast cancer cells; MCF-7, MCF-10A, MDA-MB-231.",
