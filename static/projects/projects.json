@@ -6,6 +6,13 @@
       "technologies": ["Python", "LLAMA", "LLM", "FAISS", "Numpy"]
     },
     {
+      "name": "FABRIK SFML: Robust Segmented Arm for Inverse Kinematics",
+      "description": "Uses FABRIK algorithms to move a dynamically user-generated segmented arm to reach user-defined target locations. Robust to the addition and deletion of joints, recalculates optimal positions continuously.",
+      "URL": "https://github.com/jackgao1540/FABRIK_SFML",
+      "technologies": ["C++", "Inverse Kinematics", "SFML", "FABRIK"],
+      "Demo":"/static/demos/FABRIK_SFML.mp4"
+    },
+    {
       "name": "Don Mills Online Judge Solutions",
       "description": "Solutions for problems listed on DMOJ.ca over varying difficulty.",
       "URL": "https://github.com/jackgao1540/dmoj-solutions",

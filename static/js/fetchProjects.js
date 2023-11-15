@@ -59,7 +59,8 @@ fetch('static/projects/projects.json')
         const projectDesc = document.createElement('p');
         const projectLink = document.createElement('a');
         const projectTechs = document.createElement('ul');
-
+        const projectVideo = document.createElement('video');
+        
         // Assign content from JSON
         projectName.textContent = project.name;
         projectDesc.textContent = project.description;
@@ -72,12 +73,33 @@ fetch('static/projects/projects.json')
           projectTechs.appendChild(techItem);
         });
 
+        if (project.Demo) {
+          
+          projectVideo.setAttribute('controls', '');
+          projectVideo.setAttribute('autoplay', '');
+          projectVideo.setAttribute('loop', '');
+          projectVideo.setAttribute('muted', '');
+          projectVideo.setAttribute('playsinline', '');
+
+          const source = document.createElement('source');
+          source.setAttribute('src', project.Demo);
+          source.setAttribute('type', 'video/mp4');
+
+          projectVideo.appendChild(source);
+          projectDiv.appendChild(projectVideo);
+
+          // Add class for styling if necessary
+          projectVideo.className = 'project-video';
+        }
+
         // Append to projectDiv
         projectDiv.appendChild(projectLink);
         projectDiv.appendChild(projectDesc);
         //projectDiv.appendChild(projectLink);
         projectDiv.appendChild(projectTechs);
-
+        if(project.Demo) {
+          projectDiv.appendChild(projectVideo);
+        }
         // Add classes for styling if necessary
         projectDiv.className = 'project';
         projectName.className = 'project-name';

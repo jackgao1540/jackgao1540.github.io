@@ -77,6 +77,13 @@ footer{
     color: var(--inner-text-color);
 }
 
+.project-video{
+    margin-left: 5vw;
+    margin-right: 5vw;
+    width: 60vw;
+    margin-bottom: 2vw;
+}
+
 .project-description{
     /* position:absolute;
     margin-top:30%;
