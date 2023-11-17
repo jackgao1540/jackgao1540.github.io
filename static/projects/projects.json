@@ -40,13 +40,15 @@
       "name": "Mandelbrot Set Visualizer",
       "description": "Uses a C++ graphics library SFML to generate a plot of the mandelbrot set at any arbitrary position and magnification of the fractal.",
       "URL": "https://github.com/jackgao1540/mandelbrot",
-      "technologies": ["C++", "SFML"]
+      "technologies": ["C++", "SFML"],
+      "Demo":"/static/demos/MANDELBROT.mp4"
     },
     {
       "name": "League of Legends Skillshot Dodge Simulator",
       "description": "Uses a C++ graphics library SFML to draw a player and projectiles, detects keyboard and mouse activity to let the player warm up their mechanics by dodging skillshots and aiming at moving enemies.",
       "URL": "https://github.com/jackgao1540/LeagueDodgeSimulator",
-      "technologies": ["C++", "SFML"]
+      "technologies": ["C++", "SFML"],
+      "Demo":"/static/demos/LOL.mp4"
     },
     {
       "name": "Attack on Titan Video Game in Java",
