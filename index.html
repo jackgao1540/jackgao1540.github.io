@@ -2,25 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#07151d"><meta name="description" content="Jack Gao’s personal orbit: projects, work, notes and things worth keeping.">
-<title>Jack Gao — A personal orbit</title>
-<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./style.css">
+<meta name="theme-color" content="#07151d"><meta name="description" content="Jack Gao’s projects, work, writing and favourite things.">
+<title>Jack Gao — Work in orbit</title>
+<link rel="icon" href="./assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<a class="skip-link" href="#destinations">Skip to destinations</a>
-<div class="universe" id="universe"><canvas id="solar-canvas" aria-label="Interactive solar system. Use the destination index to select a planet." role="img"></canvas><div class="scene-vignette"></div></div>
-<header class="masthead"><a class="signature" href="#/" aria-label="Jack Gao home">Jack Gao<span class="signature-star">✳</span></a><div class="masthead-meta">PERSONAL ATLAS </div><a class="github-link" href="https://github.com/jackgao1540" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></header>
-<button class="destination-toggle" id="toggle-destinations" type="button" aria-expanded="false" aria-controls="destinations">Destinations <span>08 ↗</span></button>
+<a class="skip-link" href="#destinations">Skip to contents</a>
+<div class="universe" id="universe"><canvas id="solar-canvas" aria-label="Interactive solar system. Select a planet or open the table of contents." role="img"></canvas><div class="scene-vignette"></div></div>
+<header class="masthead"><a class="signature" href="#/" aria-label="Jack Gao home">Jack Gao</a><button class="contents-toggle" id="toggle-destinations" type="button" aria-expanded="false" aria-controls="contents-sidebar">Contents <span aria-hidden="true">☰</span></button></header>
 <main id="atlas">
-<section class="introduction" aria-labelledby="main-title"><h1 id="main-title">A personal<br><em>orbit.</em></h1><p class="intro-copy">Projects, curiosities, and things<br>worth keeping. By Jack Gao.</p><div class="intro-rule"></div><p class="instruction">SELECT A PLANET TO EXPLORE <span aria-hidden="true">↗</span></p></section>
-<nav class="destination-panel" id="destinations" aria-label="Planet destinations"><div class="panel-heading"><span>THE DESTINATIONS</span><span>01 — 08</span></div><ol id="destination-list"></ol></nav>
+<section class="introduction" aria-labelledby="main-title"><h1 id="main-title">Work in <em>orbit.</em></h1><p class="instruction">Select a planet to explore</p></section>
 <div class="spatial-label" id="spatial-label" hidden></div>
 <section class="planet-detail" id="planet-detail" aria-live="polite" hidden></section>
-<div class="scene-caption" id="scene-caption"><span class="crosshair" aria-hidden="true">+</span><span>SOL SYSTEM<br><strong>SIZES & DISTANCES COMPRESSED</strong></span></div>
 </main>
 <main id="page" hidden tabindex="-1"></main>
-<footer class="bottom-bar"><div class="coordinates"><span class="status-dot"></span><span id="view-status">EXPLORING THE SOLAR SYSTEM</span></div><div class="scene-controls"><button id="reset-view" type="button" aria-label="Reset to solar system overview">↶ <span>Overview</span></button><button id="pause-motion" type="button" aria-pressed="false">Ⅱ <span>Pause motion</span></button><button id="skip-intro" type="button">Skip intro ↗</button></div></footer>
+<button id="skip-intro" class="skip-intro" type="button">Skip intro ↗</button>
+<div class="contents-shade" id="contents-shade" hidden></div>
+<aside class="contents-sidebar" id="contents-sidebar" role="dialog" aria-modal="true" aria-labelledby="contents-heading" hidden>
+<div class="contents-header"><h2 id="contents-heading">Contents</h2><button id="close-contents" type="button" aria-label="Close contents">✕</button></div>
+<nav id="destinations" aria-label="Table of contents"><a class="contents-home" href="#/">Solar system <span aria-hidden="true">↗</span></a><ol id="destination-list"></ol><a class="contents-github" href="https://github.com/jackgao1540" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a></nav>
+</aside>
 <p class="sr-only" id="announcer" role="status" aria-live="polite"></p>
 <script type="module" src="./app.js"></script>
 </body></html>

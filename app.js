@@ -6,7 +6,8 @@ const planets = [
  {id:'jupiter',name:'Jupiter',title:'Starred projects',slug:'projects',color:'#d7b69c',symbol:'♃',radius:'69,911 km',year:'11.86 Earth years',fact:'The largest planet: a gas giant with banded clouds and immense storms.'},
  {id:'saturn',name:'Saturn',title:'Favourites',slug:'favourites',color:'#d3bf8f',symbol:'♄',radius:'58,232 km',year:'29.45 Earth years',fact:'Saturn’s spectacular rings are made of countless pieces of ice and rock.'},
  {id:'uranus',name:'Uranus',title:'Uranus',color:'#98c8c9',symbol:'♅',radius:'25,362 km',year:'84 Earth years',fact:'An ice giant that rotates on its side. Methane in its atmosphere gives Uranus its blue-green colour.'},
- {id:'neptune',name:'Neptune',title:'Neptune',color:'#5381bc',symbol:'♆',radius:'24,622 km',year:'165 Earth years',fact:'Dark, cold and swept by powerful winds, Neptune marks the outer edge of the planetary system.'}
+ {id:'neptune',name:'Neptune',title:'Neptune',color:'#5381bc',symbol:'♆',radius:'24,622 km',year:'165 Earth years',fact:'Dark, cold and swept by powerful winds, Neptune is the outermost of the eight planets.'},
+ {id:'pluto',name:'Pluto',title:'Pluto',color:'#b6a28c',symbol:'♇',radius:'1,188 km',year:'248 Earth years',fact:'A dwarf planet in the Kuiper Belt, with mountains of water ice and a vast heart-shaped region.',source:'https://science.nasa.gov/dwarf-planets/pluto/facts/'}
 ];
 const byId=Object.fromEntries(planets.map(p=>[p.id,p]));
 const $=s=>document.querySelector(s);
@@ -37,38 +38,42 @@ pages['diep-genie'].body = pages['diep-genie'].body.replace(
   external('https://jackgao1540.github.io/Diep-Genie/', 'View data and reconstructions') + '</article>'
 );
 
-// The index is the keyboard and no-WebGL equivalent of canvas picking.
-$('#destination-list').innerHTML = planets.map((planet, index) => `
-  <li><button class="destination-button ${planet.slug ? '' : 'unassigned'}"
-    data-planet="${planet.id}" aria-pressed="false"
-    aria-label="Explore ${planet.name}${planet.slug ? ': ' + planet.title : ''}"
-    style="--planet:${planet.color}">
-    <span class="planet-number">${String(index + 1).padStart(2, '0')}</span>
-    <span class="planet-dot ${planet.id}" aria-hidden="true"></span>
-    <span class="destination-copy"><span class="destination-name">${planet.title}</span>
-    <span class="planet-name">${planet.slug ? planet.name : 'PLANET FACTS'}</span></span>
-    <span class="destination-arrow" aria-hidden="true">↗</span>
-  </button></li>`).join('');
+// Every destination has a direct text route in the table of contents.
+for (const planet of planets.filter(planet => !planet.slug)) {
+  pages['about/' + planet.id] = {
+    planet: planet.id,
+    title: planet.name,
+    deck: planet.fact,
+    body: '<dl class="science-facts"><dt>Classification</dt><dd>' + (planet.id === 'pluto' ? 'Dwarf planet' : 'Ice giant') + '</dd><dt>Mean radius</dt><dd>' + planet.radius + '</dd><dt>Orbital period</dt><dd>' + planet.year + '</dd></dl><p class="page-note">Rounded values. ' + external(planet.source || 'https://science.nasa.gov/' + planet.id + '/', 'Read more at NASA', '') + '</p>'
+  };
+}
+$('#destination-list').innerHTML = planets.map(planet => '<li><a class="contents-destination" href="#/' + (planet.slug || 'about/' + planet.id) + '" style="--planet:' + planet.color + '"><span class="planet-dot ' + planet.id + '" aria-hidden="true"></span><span class="destination-copy"><span class="destination-name">' + planet.title + '</span><span class="planet-name">' + (planet.id === 'pluto' ? 'DWARF PLANET' : planet.slug ? planet.name : 'PLANET FACTS') + '</span></span><span aria-hidden="true">↗</span></a></li>').join('');
 
+let contentsReturnFocus;
 function setIndexOpen(open) {
-  document.body.classList.toggle('index-open', open);
+  const sidebar = $('#contents-sidebar');
+  if (open) contentsReturnFocus = document.activeElement;
+  sidebar.hidden = !open;
+  $('#contents-shade').hidden = !open;
   $('#toggle-destinations').setAttribute('aria-expanded', String(open));
+  document.body.classList.toggle('contents-open', open);
+  $('#atlas').inert = open;
+  $('#page').inert = open;
+
+  if (open) $('#close-contents').focus();
+  else if (contentsReturnFocus?.isConnected) contentsReturnFocus.focus({ preventScroll: true });
 }
 
 function announce(text) {
   $('#announcer').textContent = text;
 }
 
-function setStatus(text) {
-  const status = $('#view-status');
-  if (status.textContent !== text) status.textContent = text;
-}
+
 
 function setPaused(value) {
   paused = value;
   scene?.setPaused(value);
-  $('#pause-motion').setAttribute('aria-pressed', String(value));
-  $('#pause-motion').innerHTML = `${value ? '▷' : 'Ⅱ'} <span>${value ? 'Resume motion' : 'Pause motion'}</span>`;
+
 }
 
 function hideDestination() {
@@ -78,31 +83,21 @@ function hideDestination() {
 
 function renderDestination(planet) {
   const label = $('#spatial-label');
-  const detail = $('#planet-detail');
-  if (planet.slug) {
-    label.innerHTML = `<a href="#/${planet.slug}">
-      <span class="label-kicker">${planet.name.toUpperCase()} / DESTINATION</span>
-      <span class="label-title">${planet.title}</span>
-      <span class="label-action">ENTER THIS WORLD <span aria-hidden="true">↗</span></span>
+  label.innerHTML = `<a href="#/${planet.slug || 'about/' + planet.id}">
+      <span class="label-kicker">${planet.name.toUpperCase()}${planet.id === 'pluto' ? ' · DWARF PLANET' : ''}</span>
+      <span class="label-title">${planet.slug ? planet.title : 'Planet facts'}</span>
+      <span class="label-action">OPEN <span aria-hidden="true">↗</span></span>
     </a>`;
-  } else {
-    detail.innerHTML = `<h2>${planet.symbol} ${planet.name}</h2>
-      <p>${planet.fact}</p>
-      <dl><dt>Mean radius</dt><dd>${planet.radius}</dd>
-      <dt>Orbital period</dt><dd>${planet.year}</dd></dl>
-      <p class="source">Rounded values · ${external('https://science.nasa.gov/' + planet.id + '/', 'NASA', '')}</p>`;
-  }
 }
 
 function showDestination(planet, projected, spatialLink = false) {
   const label = $('#spatial-label');
-  const detail = $('#planet-detail');
   if (readySelection !== planet.id) {
     renderDestination(planet);
     readySelection = planet.id;
-    setStatus(`${planet.name.toUpperCase()} / ${planet.slug ? 'DESTINATION IN VIEW' : 'PLANET FACTS'}`);
+
   }
-  if (planet.slug) {
+  {
     label.hidden = false;
     label.classList.toggle('scene-link-accessible', spatialLink);
     const x = projected?.x ?? innerWidth / 2;
@@ -111,13 +106,6 @@ function showDestination(planet, projected, spatialLink = false) {
     label.style.top = `${Math.max(115, Math.min(innerHeight - 240, y))}px`;
     if (keyboardSelection) {
       label.querySelector('a').focus({ preventScroll: true });
-      keyboardSelection = false;
-    }
-  } else {
-    detail.hidden = false;
-    if (keyboardSelection) {
-      detail.setAttribute('tabindex', '-1');
-      detail.focus({ preventScroll: true });
       keyboardSelection = false;
     }
   }
@@ -132,15 +120,12 @@ function choosePlanet(id, writeRoute = true) {
   focusTime = performance.now();
   document.body.classList.add('focused');
   setIndexOpen(false);
-  if (matchMedia('(max-width: 700px)').matches) {
-    $('#reset-view').focus({ preventScroll: true });
-  }
+
   document.querySelectorAll('[data-planet]').forEach(button => {
     button.setAttribute('aria-pressed', String(button.dataset.planet === id));
   });
   hideDestination();
   $('#skip-intro').hidden = true;
-  setStatus(`APPROACHING ${planet.name.toUpperCase()}`);
   scene?.skipIntro();
   scene?.focus(id);
   if (writeRoute && location.hash !== `#/planet/${id}`) {
@@ -161,14 +146,14 @@ function overview(writeRoute = true, preserveIntro = false) {
   readySelection = null;
   document.body.classList.remove('focused');
   hideDestination();
-  setStatus('EXPLORING THE SOLAR SYSTEM');
   document.querySelectorAll('[data-planet]').forEach(button => button.setAttribute('aria-pressed', 'false'));
   if (!preserveIntro) scene?.overview();
   if (writeRoute) location.hash = '/';
 }
 
 function enter(id) {
-  if (byId[id]?.slug) location.hash = '/' + byId[id].slug;
+  const planet = byId[id];
+  if (planet) location.hash = '/' + (planet.slug || 'about/' + id);
 }
 
 function renderFrame(frame) {
@@ -195,14 +180,13 @@ function renderPage(path, page) {
   $('#page').innerHTML = `
     <a class="back-link" href="#/planet/${planet.id}">← <span>BACK TO ${planet.name.toUpperCase()}</span></a>
     <header class="page-heading"><div>
-      <p class="page-eyebrow">JACK GAO / ${planet.name.toUpperCase()}</p><h1>${page.title}</h1>
+      <h1>${page.title}</h1>
     </div><span class="page-symbol" aria-hidden="true">${planet.symbol}</span></header>
     <p class="page-deck">${page.deck}</p>${page.body}
     <nav class="page-footer" aria-label="Page navigation">
       <a href="#/">← Solar system</a><a href="#/${next}">Next: ${pages[next].title} ↗</a>
     </nav>`;
   scene?.setPaused(true);
-  setStatus(planet.name.toUpperCase() + ' / ' + page.title.toUpperCase());
   window.scrollTo(0, 0);
   $('#page').focus({ preventScroll: true });
 }
@@ -218,7 +202,7 @@ function route({ initial = false } = {}) {
   $('#atlas').hidden = false;
   $('#page').hidden = true;
   document.body.classList.remove('is-page');
-  document.title = 'Jack Gao — A personal orbit';
+  document.title = 'Jack Gao — Work in orbit';
   scene?.setPaused(paused);
   const match = path.match(/^planet\/(\w+)$/);
   if (match && byId[match[1]]) choosePlanet(match[1], false);
@@ -230,55 +214,55 @@ function enableFallback() {
   fallback = true;
   const message = document.createElement('p');
   message.className = 'fallback-message';
-  message.textContent = 'The 3D sky is unavailable. Explore every destination in the index.';
+  message.textContent = 'Open Contents to explore every destination.';
   $('#universe').append(message);
   $('#skip-intro').hidden = true;
   if (selected) choosePlanet(selected, false);
 }
 
-$('#toggle-destinations').addEventListener('click', () => {
-  setIndexOpen(!document.body.classList.contains('index-open'));
+$('#toggle-destinations').addEventListener('click', () => setIndexOpen($('#contents-sidebar').hidden));
+$('#close-contents').addEventListener('click', () => setIndexOpen(false));
+$('#contents-shade').addEventListener('click', () => setIndexOpen(false));
+$('#contents-sidebar').addEventListener('click', event => {
+  const link = event.target.closest('a');
+  if (!link) return;
+  setIndexOpen(false);
+  if (link.getAttribute('href') === '#/') {
+    event.preventDefault();
+    overview();
+    $('.signature').focus();
+  }
 });
 $('.skip-link').addEventListener('click', event => {
   event.preventDefault();
-  if (!$('#page').hidden) location.hash = '/';
-  overview(false);
   setIndexOpen(true);
-  $('#destination-list button').focus({ preventScroll: true });
 });
-$('#destination-list').addEventListener('click', event => {
-  const button = event.target.closest('[data-planet]');
-  if (button) {
-    keyboardSelection = event.detail === 0;
-    choosePlanet(button.dataset.planet);
-  }
+$('.signature').addEventListener('click', event => {
+  event.preventDefault();
+  setIndexOpen(false);
+  overview();
+  $('.signature').focus();
 });
-$('#reset-view').addEventListener('click', () => {
-  if ($('#page').hidden) {
-    overview();
-    announce('Solar system overview.');
-  } else location.hash = '/';
-});
-$('#pause-motion').addEventListener('click', () => setPaused(!paused));
 $('#skip-intro').addEventListener('click', () => {
   scene?.skipIntro();
   $('#skip-intro').hidden = true;
-  announce('Intro skipped. Select a planet to explore.');
 });
 window.addEventListener('hashchange', () => route());
 window.addEventListener('popstate', () => route());
 window.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && $('#page').hidden) {
-    const previous = selected;
-    overview();
-    if (previous) {
-      setIndexOpen(true);
-      $(`[data-planet="${previous}"]`).focus();
-    } else if (document.body.classList.contains('index-open')) {
-      setIndexOpen(false);
-      $('#toggle-destinations').focus();
+  const sidebar = $('#contents-sidebar');
+  if (!sidebar.hidden) {
+    if (event.key === 'Escape') { event.preventDefault(); setIndexOpen(false); }
+    if (event.key === 'Tab') {
+      const items = [$('#toggle-destinations'), ...sidebar.querySelectorAll('a,button')];
+      const current = items.indexOf(document.activeElement);
+      const step = event.shiftKey ? -1 : 1;
+      event.preventDefault();
+      items[(current + step + items.length) % items.length].focus();
     }
+    return;
   }
+  if (event.key === 'Escape' && $('#page').hidden) { overview(); $('.signature').focus(); }
 });
 
 try {
@@ -286,6 +270,7 @@ try {
   scene = createSolarScene($('#solar-canvas'), {
     onSelect: id => id === 'sun' ? overview() : choosePlanet(id),
     onEnter: enter,
+    onOverview: () => overview(),
     onHover: id => { document.body.style.cursor = id ? 'pointer' : ''; },
     onFrame: renderFrame,
     onReady: result => { if (result?.webgl === false) enableFallback(); }
