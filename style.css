@@ -40,3 +40,12 @@
   .contents-open .introduction{visibility:hidden;opacity:0;transition:none}
 }
 @media(max-width:700px){.introduction{transition:none}}
+/* Pointer-only satellite cue: small, transient, and never a tap obstruction. */
+.moon-name{position:fixed;z-index:6;pointer-events:none;user-select:none;font-family:var(--mono);font-size:12px;font-weight:400;line-height:1.4;color:#f0e8d9;text-shadow:0 1px 5px #000,0 0 10px #000;white-space:nowrap}
+@media(max-width:700px){.moon-name{font-size:12px}}
+/* The 2D link occupies reserved space below its fitted satellite system. */
+.spatial-label.fallback-destination:before{display:none}
+.spatial-label.fallback-destination a{padding:15px 21px}
+.spatial-label.fallback-destination .label-kicker{margin-bottom:6px}
+.spatial-label.fallback-destination .label-title{font-size:28px}
+.spatial-label.fallback-destination .label-action{margin-top:12px}

@@ -5,13 +5,14 @@ An interactive solar-system portfolio, published at **https://jackgao1540.github
 ## Edit the atlas
 
 - **Destination names, planet facts, and page content:** edit `planets` and `pages` near the top of `app.js`. Give a planet a `slug` and matching `pages` entry to add its destination. Hash routes such as `#/diep-genie` work on static hosting and refresh safely.
+- **Moon catalogue:** edit `moons.js` for selected satellite measurements and source links; `moon-renderer.js` controls their display layout, materials, frame transforms and clock. Close-ups show a representative major-moon roster, not every known satellite. See the moon section in `ASSET-CREDITS.md` for reference planes, presentation scales, and date limitations.
 - **Bodies, orbit placement, camera motion, and materials:** edit `PLANETS` and the scene functions in `scene.js`. The scene uses Three.js, with a 2D fallback when WebGL is unavailable. Sizes and distances are compressed for exploration.
 - **Contents sidebar:** use the top-right Contents button on any page to open the destination list. It remains hidden until requested and supports keyboard navigation and native scrolling.
 - **Layout, navigation, and fonts:** edit `index.html` and `style.css`. Fonts, Three.js, and visual assets are served locally.
 
 ## Explore
 
-Click a body to approach it, then click its in-world plaque to open the topic. With a mouse or trackpad, scroll inward (negative vertical delta) over a body to approach it; scroll outward (positive delta) from a close-up to return to the overview. Scroll over empty space to adjust the general zoom. Click **Jack Gao** to return home and reset the view, including after free-space zoom. Scrolling inside Contents or an article scrolls its content normally.
+Click a body to approach it, then click its in-world plaque to open the topic. Hover or tap a moon for a short name cue; the selected view also supplies a screen-reader moon list. With a mouse or trackpad, scroll inward (negative vertical delta) over a body to approach it; scroll outward (positive delta) from a close-up to return to the overview. Scroll over empty space to adjust the general zoom. Click **Jack Gao** to return home and reset the view, including after free-space zoom. Scrolling inside Contents or an article scrolls its content normally.
 
 ## Preview
 

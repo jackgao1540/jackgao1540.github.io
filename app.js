@@ -1,3 +1,4 @@
+import { MOONS } from './moons.js';
 const planets = [
  {id:'mercury',name:'Mercury',title:'Posts',slug:'posts',color:'#ada397',symbol:'☿',radius:'2,440 km',year:'88 Earth days',fact:'The smallest planet, and the closest to the Sun. Its cratered surface holds a record of ancient impacts.'},
  {id:'venus',name:'Venus',title:'Favourite pictures',slug:'pictures',color:'#dbb98d',symbol:'♀',radius:'6,052 km',year:'225 Earth days',fact:'Wrapped in thick clouds, Venus is the hottest planet in our solar system.'},
@@ -49,10 +50,74 @@ for (const planet of planets.filter(planet => !planet.slug)) {
 }
 $('#destination-list').innerHTML = planets.map(planet => '<li><a class="contents-destination" href="#/' + (planet.slug || 'about/' + planet.id) + '" style="--planet:' + planet.color + '"><span class="planet-dot ' + planet.id + '" aria-hidden="true"></span><span class="destination-copy"><span class="destination-name">' + planet.title + '</span><span class="planet-name">' + (planet.id === 'pluto' ? 'DWARF PLANET' : planet.slug ? planet.name : 'PLANET FACTS') + '</span></span><span aria-hidden="true">↗</span></a></li>').join('');
 
+// Identification stays transient; it never creates another click target.
+const moonName = document.createElement('div');
+moonName.className = 'moon-name';
+moonName.hidden = true;
+moonName.setAttribute('aria-hidden', 'true');
+$('#atlas').append(moonName);
+const moonSummary = document.createElement('p');
+moonSummary.id = 'moon-summary';
+moonSummary.className = 'sr-only';
+$('#atlas').append(moonSummary);
+const moonAnnouncement = document.createElement('p');
+moonAnnouncement.className = 'sr-only';
+moonAnnouncement.setAttribute('role', 'status');
+moonAnnouncement.setAttribute('aria-live', 'polite');
+$('#atlas').append(moonAnnouncement);
+let identifiedMoon = null;
+let moonFrame = null;
+let moonPointerType = 'mouse';
+let moonLabelTimer;
+
+function hideMoonName() {
+  clearTimeout(moonLabelTimer);
+  identifiedMoon = null;
+  moonName.hidden = true;
+  moonAnnouncement.textContent = '';
+}
+
+function positionMoonName() {
+  if (!identifiedMoon || !moonFrame || !$('#page').hidden || document.body.classList.contains('contents-open')) return;
+  const projected = moonFrame.moons?.find(moon => moon.id === identifiedMoon.id);
+  if (!projected?.visible) { moonName.hidden = true; return; }
+  moonName.hidden = false;
+  const box = moonName.getBoundingClientRect();
+  let x = Math.max(12, Math.min(innerWidth - box.width - 12, projected.x + projected.radius + 10));
+  let y = Math.max(88, projected.y - projected.radius - box.height - 8);
+  const destination = $('#spatial-label');
+  const domPlaque = !destination.hidden && !destination.classList.contains('scene-link-accessible') ? destination.getBoundingClientRect() : null;
+  const plaque = moonFrame.plaqueBounds || domPlaque;
+  if (plaque && x < plaque.right + 10 && x + box.width > plaque.left - 10 && y < plaque.bottom + 10 && y + box.height > plaque.top - 10) {
+    y = Math.max(88, plaque.top - box.height - 12);
+  }
+  moonName.style.left = x + 'px';
+  moonName.style.top = Math.min(innerHeight - box.height - 12, y) + 'px';
+}
+
+function identifyMoon(moon) {
+  if (!moon) {
+    // Touch pointer-leave can follow pointer-up immediately; retain its short cue.
+    if (moonPointerType !== 'touch') hideMoonName();
+    return;
+  }
+  if (!selected || moon.parent !== selected || !$('#page').hidden || document.body.classList.contains('contents-open')) return;
+  const changed = identifiedMoon?.id !== moon.id;
+  identifiedMoon = moon;
+  moonName.textContent = moon.name;
+  if (changed) moonAnnouncement.textContent = moon.name;
+  positionMoonName();
+  clearTimeout(moonLabelTimer);
+  if (moonPointerType === 'touch') moonLabelTimer = setTimeout(hideMoonName, 2200);
+}
+$('#solar-canvas').addEventListener('pointerdown', event => { moonPointerType = event.pointerType; }, true);
+$('#solar-canvas').addEventListener('pointermove', event => { moonPointerType = event.pointerType; }, true);
+$('#solar-canvas').addEventListener('pointerleave', () => { if (moonPointerType !== 'touch') hideMoonName(); });
+
 let contentsReturnFocus;
 function setIndexOpen(open) {
   const sidebar = $('#contents-sidebar');
-  if (open) contentsReturnFocus = document.activeElement;
+  if (open) { contentsReturnFocus = document.activeElement; hideMoonName(); }
   sidebar.hidden = !open;
   $('#contents-shade').hidden = !open;
   $('#toggle-destinations').setAttribute('aria-expanded', String(open));
@@ -83,7 +148,7 @@ function hideDestination() {
 
 function renderDestination(planet) {
   const label = $('#spatial-label');
-  label.innerHTML = `<a href="#/${planet.slug || 'about/' + planet.id}">
+  label.innerHTML = `<a aria-describedby="moon-summary" href="#/${planet.slug || 'about/' + planet.id}">
       <span class="label-kicker">${planet.name.toUpperCase()}${planet.id === 'pluto' ? ' · DWARF PLANET' : ''}</span>
       <span class="label-title">${planet.slug ? planet.title : 'Planet facts'}</span>
       <span class="label-action">OPEN <span aria-hidden="true">↗</span></span>
@@ -100,10 +165,13 @@ function showDestination(planet, projected, spatialLink = false) {
   {
     label.hidden = false;
     label.classList.toggle('scene-link-accessible', spatialLink);
-    const x = projected?.x ?? innerWidth / 2;
-    const y = projected ? projected.y + (projected.radius || 45) * .65 : innerHeight * .42;
+    label.classList.toggle('fallback-destination', fallback);
+    const x = fallback ? innerWidth / 2 : projected?.x ?? innerWidth / 2;
+    const y = fallback
+      ? Math.min(innerHeight - label.offsetHeight - 24, innerHeight * .76)
+      : projected ? projected.y + (projected.radius || 45) * .65 : innerHeight * .42;
     label.style.left = `${Math.max(130, Math.min(innerWidth - 130, x))}px`;
-    label.style.top = `${Math.max(115, Math.min(innerHeight - 240, y))}px`;
+    label.style.top = `${fallback ? Math.max(96, y) : Math.max(115, Math.min(innerHeight - 240, y))}px`;
     if (keyboardSelection) {
       label.querySelector('a').focus({ preventScroll: true });
       keyboardSelection = false;
@@ -115,7 +183,10 @@ function choosePlanet(id, writeRoute = true) {
   const planet = byId[id];
   if (!planet) return;
   clearTimeout(fallbackTimer);
+  hideMoonName();
   selected = id;
+  const names = MOONS.filter(moon => moon.parent === id).map(moon => moon.name);
+  moonSummary.textContent = names.length ? 'Moons in this view: ' + names.join(', ') + '.' : 'No natural moons.';
   readySelection = null;
   focusTime = performance.now();
   document.body.classList.add('focused');
@@ -143,6 +214,8 @@ function choosePlanet(id, writeRoute = true) {
 function overview(writeRoute = true, preserveIntro = false) {
   clearTimeout(fallbackTimer);
   selected = null;
+  hideMoonName();
+  moonSummary.textContent = '';
   readySelection = null;
   document.body.classList.remove('focused');
   hideDestination();
@@ -157,6 +230,8 @@ function enter(id) {
 }
 
 function renderFrame(frame) {
+  moonFrame = frame;
+  positionMoonName();
   if (!frame.intro) $('#skip-intro').hidden = true;
   if (!selected || !$('#page').hidden) return;
   if (performance.now() - focusTime < (reduced ? 0 : 1250)) return;
@@ -170,6 +245,7 @@ function renderFrame(frame) {
 }
 
 function renderPage(path, page) {
+  hideMoonName();
   const planet = byId[page.planet];
   const entries = Object.keys(pages);
   const next = entries[(entries.indexOf(path) + 1) % entries.length];
@@ -270,6 +346,7 @@ try {
   scene = createSolarScene($('#solar-canvas'), {
     onSelect: id => id === 'sun' ? overview() : choosePlanet(id),
     onEnter: enter,
+    onHoverMoon: identifyMoon,
     onOverview: () => overview(),
     onHover: id => { document.body.style.cursor = id ? 'pointer' : ''; },
     onFrame: renderFrame,
