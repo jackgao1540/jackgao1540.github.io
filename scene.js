@@ -37,11 +37,18 @@ export function projectedGlobeWidth(radius,x,depth,fov,height){
 let finePointerQuery;
 const desktopPointer=()=>(finePointerQuery??=matchMedia('(pointer: fine)')).matches;
 // Use the visible scene in CSS pixels, including mobile browser chrome changes.
-function releaseCutoff(canvas,width){
-  if(desktopPointer())return width*.1;
-  const bounds=canvas.getBoundingClientRect(),viewport=window.visualViewport;
-  const top=viewport?.offsetTop||0,bottom=top+(viewport?.height||window.innerHeight);
-  return Math.max(0,Math.min(bounds.bottom,bottom)-Math.max(bounds.top,top))*.15;
+function createReleasePolicy(canvas){
+  let previousPortrait;
+  return width=>{
+    const bounds=canvas.getBoundingClientRect(),viewport=window.visualViewport;
+    const viewportHeight=viewport?.height||window.innerHeight,viewportWidth=viewport?.width||window.innerWidth;
+    const portrait=viewportHeight>=viewportWidth,vertical=!desktopPointer()&&portrait;
+    const rotated=previousPortrait!==undefined&&portrait!==previousPortrait;
+    previousPortrait=portrait;
+    const top=viewport?.offsetTop||0,bottom=top+viewportHeight;
+    const visibleHeight=Math.max(0,Math.min(bounds.bottom,bottom)-Math.max(bounds.top,top));
+    return {vertical,cutoff:vertical?visibleHeight*.15:width*.1,rotated};
+  };
 }
 // A wheel stream may select an anchor and keep zooming without a gesture lockout.
 export function createWheelNavigator({isActive,height,pick,selected,onEnter,onZoom}) {
@@ -271,10 +278,13 @@ export function createSolarScene(canvas, options={}) {
     body.group.getWorldPosition(world);projected.copy(world).applyMatrix4(camera.matrixWorldInverse);
     return projectedGlobeWidth(body.radius,vertical?projected.y:projected.x,-projected.z,camera.fov,height);
   }
+  const releasePolicy=createReleasePolicy(canvas);
   function releaseIfSmall(){
+    const {vertical,cutoff,rotated}=releasePolicy(width);
+    if(rotated)outwardArmed=false;
     if(!selected||!outwardArmed)return;
-    const body=planets.get(selected),cutoff=releaseCutoff(canvas,width);
-    if(globeExtent(body,!desktopPointer())<cutoff){releaseAnchor(true);return;}
+    const body=planets.get(selected);
+    if(globeExtent(body,vertical)<cutoff){releaseAnchor(true);return;}
     const requested=Math.max(minFocusDistance(),focusBaseDistance*focusZoom);
     const targetWidth=projectedGlobeWidth(body.radius,0,requested,fovGoal,height);
     const settled=Math.abs(camera.position.distanceTo(trackedCenter)-requested)<requested*.00001&&Math.abs(camera.fov-fovGoal)<.001&&transition>=1;
@@ -287,8 +297,10 @@ export function createSolarScene(canvas, options={}) {
     if(!selected&&delta<0&&event){const id=pick(event);if(id)approach(id);}
     const factor=Math.exp(delta*.002);
     if(selected){
+      const {vertical,cutoff,rotated}=releasePolicy(width);
+      if(rotated)outwardArmed=false;
       if(delta>0)outwardArmed=true;
-      if(outwardArmed&&globeExtent(planets.get(selected),!desktopPointer())<releaseCutoff(canvas,width)){
+      if(outwardArmed&&globeExtent(planets.get(selected),vertical)<cutoff){
         // Cancel a pending fly-in before releasing an already-small selection.
         const center=planets.get(selected).group.getWorldPosition(new THREE.Vector3());
         cameraGoal.copy(camera.position).sub(center).multiplyScalar(factor).add(center);
@@ -402,6 +414,7 @@ function createFallback(canvas,options) {
   let selected=null,points=[],moonPoints=[],zoom=1,paused=false,suspended=!!options.suspended,disposed=false,elapsed=0,last=performance.now(),raf=0,panX=0,panY=0,userYaw=0,userPitch=0,introStart=null,introResolve=null;
   const viewLook=new THREE.Vector3(),worldTarget=new THREE.Vector3(),freeLook=new THREE.Vector3();
   let renderZoom=1,continuousSelection=false,outwardArmed=false,keepReleaseView=false,emittingFrame=false;
+  const releasePolicy=createReleasePolicy(canvas);
   let lastViewWidth=0,lastViewHeight=0;
   function playIntro(){
     if(reduced){overview();return Promise.resolve();}
@@ -513,9 +526,10 @@ function createFallback(canvas,options) {
     try{if(options.onOverview)options.onOverview();else overview();}finally{continuousSelection=false;keepReleaseView=false;}
   }
   function releaseIfSmall(width){
+    const {cutoff,rotated}=releasePolicy(width);
+    if(rotated)outwardArmed=false;
     const body=points.find(p=>p.id===selected);
     if(!body||!outwardArmed)return;
-    const cutoff=releaseCutoff(canvas,width);
     if(body.r*2<cutoff){releaseAnchor(true);return;}
     const targetWidth=body.r*2*renderZoom/zoom;
     if(Math.abs(renderZoom-zoom)<zoom*.00001&&targetWidth>=cutoff)outwardArmed=false;
@@ -526,7 +540,9 @@ function createFallback(canvas,options) {
     const r=canvas.getBoundingClientRect(),base=Math.min(r.width/100,r.height/68),p=bodyConfig(selected);
     const minimum=p?p.radius*base/(Math.max(r.width,r.height)*32):.00001;
     const body=points.find(body=>body.id===selected);
-    if(delta>0&&body&&body.r*2<releaseCutoff(canvas,r.width))zoom=Math.max(zoom,renderZoom);
+    const {cutoff,rotated}=releasePolicy(r.width);
+    if(rotated)outwardArmed=false;
+    if(delta>0&&body&&body.r*2<cutoff)zoom=Math.max(zoom,renderZoom);
     zoom=Math.max(minimum,Math.min(4,zoom*Math.exp(delta*.002)));
     if(selected&&delta>0){outwardArmed=true;releaseIfSmall(r.width);}
     draw();
