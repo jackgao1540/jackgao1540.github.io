@@ -104,3 +104,4 @@ input,select,textarea{font:inherit}
 
 /* Keep navigation readable over a sunlit close surface without dimming the scene. */
 .masthead{text-shadow:2px 0 0 #010711,-2px 0 0 #010711,0 2px 0 #010711,0 -2px 0 #010711,1px 1px 0 #010711,-1px -1px 0 #010711}
+.masthead button,.masthead button span{text-shadow:inherit}
