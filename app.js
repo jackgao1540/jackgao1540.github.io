@@ -315,7 +315,7 @@ window.addEventListener('keydown', event => {
   if (!sidebar.hidden) {
     if (event.key === 'Escape') { event.preventDefault(); setIndexOpen(false); }
     if (event.key === 'Tab') {
-      const items = [$('#toggle-destinations'), ...sidebar.querySelectorAll('a,button')];
+      const items = [$('#toggle-destinations'), $('#sound-toggle'), ...sidebar.querySelectorAll('a,button')].filter(Boolean);
       const current = items.indexOf(document.activeElement);
       const step = event.shiftKey ? -1 : 1;
       event.preventDefault();

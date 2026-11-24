@@ -54,3 +54,7 @@ Pixelify Sans variable font (weights 400–700), Copyright 2021 The Pixelify San
 Orbit Pixel Symbols supplies the nine existing planetary symbols and four navigation icons that Pixelify Sans does not contain. Original 9 × 11 pixel glyphs, generated locally by `tools/build-pixel-symbols.cjs`, dedicated to CC0 1.0 Universal. The glyph font is narrowly scoped by Unicode range and preserves the existing Unicode text and accessible names. Dedication at `assets/fonts/OrbitPixelSymbols-CC0.txt`.
 
 Close-range planet albedo includes subtle, derivative-filtered multiscale object-space procedural detail below the finite source-map texel size. These authored rock/cloud variations are illustrative, rather than additional observed geographic detail. The 2D renderer uses cached fine procedural grain at close scales.
+
+## Soundtrack
+
+`assets/audio/ftl-theme.mp3` is an unchanged copy of the MP3 supplied by the site owner for looping playback (FTL: Faster Than Light theme). It is user-provided audio, not an original portfolio composition or a claim of an open license. File SHA-256: `db137ddc09f9a0966bf23695d00178975e6b22195b949c268a39c0d4d725d174`.

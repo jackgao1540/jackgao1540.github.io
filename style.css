@@ -105,3 +105,9 @@ input,select,textarea{font:inherit}
 /* Keep navigation readable over a sunlit close surface without dimming the scene. */
 .masthead{text-shadow:2px 0 0 #010711,-2px 0 0 #010711,0 2px 0 #010711,0 -2px 0 #010711,1px 1px 0 #010711,-1px -1px 0 #010711}
 .masthead button,.masthead button span{text-shadow:inherit}
+
+/* The soundtrack remains reachable in the void intro and every in-page route. */
+.sound-toggle{position:fixed;z-index:220;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));min-width:104px;min-height:44px;padding:10px 12px;border:1px solid #a5926c80;background:#05141ce8;color:var(--gold);font-family:var(--mono);font-size:13px;line-height:1;text-align:center}
+.sound-toggle:hover{background:#102a34}
+.sound-toggle:disabled{opacity:.55;cursor:default}
+@media(max-width:700px){.sound-toggle{right:12px;bottom:max(12px,env(safe-area-inset-bottom));min-width:96px;font-size:12px}}

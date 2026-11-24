@@ -124,7 +124,7 @@ export function createEntrance({ reduced, onEnter, onComplete }) {
     }
   }
   function keydown(event) {
-    if (!active()) return;
+    if (!active() || event.target?.closest?.('#sound-toggle')) return;
     if (['ArrowDown', 'PageDown', ' ', 'Enter'].includes(event.key)) {
       event.preventDefault(); event.stopImmediatePropagation();
       if (stage === 'waiting') enter();

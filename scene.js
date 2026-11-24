@@ -26,6 +26,13 @@ function orbitPosition(p,meanAnomaly){
   const x=p.orbit*(Math.cos(E)-p.eccentricity),z=p.orbit*Math.sqrt(1-p.eccentricity*p.eccentricity)*Math.sin(E),inc=p.inclination*Math.PI/180;
   return new THREE.Vector3(x,z*Math.sin(inc),z*Math.cos(inc));
 }
+// Horizontal silhouette of a sphere in CSS pixels, including off-axis perspective.
+export function projectedGlobeWidth(radius,x,depth,fov,height){
+  if(depth<=radius)return Infinity;
+  return radius*Math.sqrt(depth*depth+x*x-radius*radius)/(depth*depth-radius*radius)*height/Math.tan(fov*Math.PI/360);
+}
+let finePointerQuery;
+const desktopPointer=()=>(finePointerQuery??=matchMedia('(pointer: fine)')).matches;
 // A wheel stream may select an anchor and keep zooming without a gesture lockout.
 export function createWheelNavigator({isActive,height,pick,selected,onEnter,onZoom}) {
   return function wheel(event){
@@ -183,12 +190,12 @@ export function createSolarScene(canvas, options={}) {
   const stars=new THREE.Points(starGeo,starMaterial);scene.add(stars);
   let onScreen=true,suspended=!!options.suspended,userYaw=0,userPitch=0,overviewZoom=1,focusZoom=1;
   let width=1,height=1,selected=null,hovered=null,paused=false,disposed=false,elapsed=0,frame=0,raf=0,last=performance.now(),introElapsed=0,intro=false,introRendered=false,introResolve=null;
-  let transition=1,transitionStart=last;
+  let transition=1,transitionStart=last,outwardArmed=false,freeViewAnchored=false;
   const look=new THREE.Vector3(1,0,0),cameraStart=new THREE.Vector3(),lookStart=new THREE.Vector3();
-  const overviewPos=new THREE.Vector3(),overviewLook=new THREE.Vector3();
-  function size(){const bounds=canvas.getBoundingClientRect();width=Math.max(1,bounds.width);height=Math.max(1,bounds.height);const pixels=pixelSize(width,height);renderer.setSize(pixels.width,pixels.height,false);pixelSky.resize(width,height);camera.aspect=width/height;camera.updateProjectionMatrix();const portrait=width/height<1.1;overviewPos.set(portrait?20:4,portrait?66:33,portrait?111:52);overviewLook.set(portrait?3:1,0,0);}
+  const overviewPos=new THREE.Vector3(),overviewLook=new THREE.Vector3(),freeLook=new THREE.Vector3();
+  function size(){const bounds=canvas.getBoundingClientRect();if(width!==Math.max(1,bounds.width)||height!==Math.max(1,bounds.height))outwardArmed=false;width=Math.max(1,bounds.width);height=Math.max(1,bounds.height);const pixels=pixelSize(width,height);renderer.setSize(pixels.width,pixels.height,false);pixelSky.resize(width,height);camera.aspect=width/height;camera.updateProjectionMatrix();const portrait=width/height<1.1;overviewPos.set(portrait?20:4,portrait?66:33,portrait?111:52);overviewLook.set(portrait?3:1,0,0);if(!freeViewAnchored)freeLook.copy(overviewLook);}
   size();const resizeObserver=new ResizeObserver(size);resizeObserver.observe(canvas);
-  camera.position.copy(overviewPos);look.copy(overviewLook);
+  camera.position.copy(overviewPos);look.copy(overviewLook);freeLook.copy(overviewLook);
   const introLook=new THREE.Vector3(),introOffset=new THREE.Vector3();
   function playIntro(){
     if(reduced){camera.position.copy(overviewPos);look.copy(overviewLook);return Promise.resolve();}
@@ -202,6 +209,7 @@ export function createSolarScene(canvas, options={}) {
   const cameraGoal=new THREE.Vector3(),lookGoal=new THREE.Vector3(),focusOffset=new THREE.Vector3(),trackedCenter=new THREE.Vector3();
   const surfaceRotation=new THREE.Quaternion(),surfaceStep=new THREE.Quaternion(),spinAxis=new THREE.Vector3();
   let focusBaseDistance=1,anchorTheta=0,anchorPhi=1,fovGoal=43,continuousSelection=false;
+  let keepReleaseView=false;
   const minFocusDistance=()=>{const radius=planets.get(selected)?.radius||1;return radius*1.0025+.0001;};
   function framingDistance(p){
     const moonExtent=satellites.extent(p.config.id);
@@ -216,7 +224,7 @@ export function createSolarScene(canvas, options={}) {
       const optical=Math.min(1,Math.max(.06,requested/min));
       fovGoal=2*Math.atan(Math.tan(43*Math.PI/360)*optical)*180/Math.PI;
     }else{
-      lookGoal.copy(overviewLook);spherical=new THREE.Spherical().setFromVector3(overviewPos.clone().sub(overviewLook));
+      lookGoal.copy(freeLook);spherical=new THREE.Spherical().setFromVector3(overviewPos.clone().sub(overviewLook));
       spherical.radius*=overviewZoom;fovGoal=43;
     }
     spherical.theta+=userYaw;spherical.phi=Math.max(.08,Math.min(Math.PI-.08,spherical.phi+userPitch));
@@ -245,17 +253,42 @@ export function createSolarScene(canvas, options={}) {
   function leave(){hovered=null;hoveredMoon=null;options.onHover?.(null);options.onHoverMoon?.(null);}
   const inputActive=()=>!disposed&&!suspended&&!document.body.classList.contains('entering')&&!document.body.classList.contains('contents-open')&&!document.body.classList.contains('is-page');
   function approach(id){continuousSelection=true;try{if(options.onSelect)options.onSelect(id);else focus(id);}finally{continuousSelection=false;}}
-  function releaseAnchor(){continuousSelection=true;try{if(options.onOverview)options.onOverview();else overview();}finally{continuousSelection=false;}}
+  function releaseAnchor(keepView=false){
+    keepReleaseView=keepView;continuousSelection=true;
+    try{if(options.onOverview)options.onOverview();else overview();}finally{continuousSelection=false;keepReleaseView=false;}
+  }
+  function globeWidth(body){
+    body.group.getWorldPosition(world);projected.copy(world).applyMatrix4(camera.matrixWorldInverse);
+    return projectedGlobeWidth(body.radius,projected.x,-projected.z,camera.fov,height);
+  }
+  function releaseIfSmall(){
+    if(!selected||!outwardArmed||!desktopPointer())return;
+    const body=planets.get(selected),cutoff=width*.1;
+    if(globeWidth(body)<cutoff){releaseAnchor(true);return;}
+    const requested=Math.max(minFocusDistance(),focusBaseDistance*focusZoom);
+    const targetWidth=projectedGlobeWidth(body.radius,0,requested,fovGoal,height);
+    const settled=Math.abs(camera.position.distanceTo(trackedCenter)-requested)<requested*.00001&&Math.abs(camera.fov-fovGoal)<.001&&transition>=1;
+    // A completed zoom above the cutoff must not arm an unrelated later resize.
+    if(settled&&targetWidth>=cutoff)outwardArmed=false;
+  }
   function zoomBy(delta,event){
     if(intro)skipIntro();
+    if(delta<0)outwardArmed=false;
     if(!selected&&delta<0&&event){const id=pick(event);if(id&&id!=='sun')approach(id);}
     const factor=Math.exp(delta*.002);
     if(selected){
+      if(delta>0)outwardArmed=desktopPointer();
+      if(outwardArmed&&globeWidth(planets.get(selected))<width*.1){
+        // Cancel a pending fly-in before releasing an already-small selection.
+        const center=planets.get(selected).group.getWorldPosition(new THREE.Vector3());
+        cameraGoal.copy(camera.position).sub(center).multiplyScalar(factor).add(center);
+        releaseAnchor(true);return;
+      }
       focusZoom=Math.max(minFocusDistance()/focusBaseDistance*.06,focusZoom*factor);
       const center=planets.get(selected).group.getWorldPosition(new THREE.Vector3());
       const outer=Math.max(overviewPos.distanceTo(center),focusBaseDistance*1.25);
-      if(delta>0&&focusZoom*focusBaseDistance>outer){target();releaseAnchor();}
-    }else overviewZoom=Math.max(.12,Math.min(4,overviewZoom*factor));
+      if(delta>0){target();if(desktopPointer())releaseIfSmall();else if(focusZoom*focusBaseDistance>outer)releaseAnchor();}
+    }else overviewZoom=Math.max(freeViewAnchored ? .0001 : .12,Math.min(Math.max(4,overviewZoom),overviewZoom*factor));
   }
   function dragGain(){
     if(!selected)return 1;
@@ -270,7 +303,7 @@ export function createSolarScene(canvas, options={}) {
   function beginTransition(){introResolve?.();introResolve=null;cameraStart.copy(camera.position);lookStart.copy(look);transition=0;transitionStart=performance.now();intro=false;}
   function focus(id){
     if(!planets.has(id))return;
-    selected=id;const p=planets.get(id);p.group.getWorldPosition(trackedCenter);
+    selected=id;outwardArmed=false;const p=planets.get(id);p.group.getWorldPosition(trackedCenter);
     const offset=new THREE.Spherical().setFromVector3(camera.position.clone().sub(trackedCenter));
     anchorTheta=offset.theta;anchorPhi=offset.phi;userYaw=0;userPitch=0;surfaceRotation.identity();
     focusBaseDistance=framingDistance(p);focusZoom=continuousSelection?offset.radius/focusBaseDistance:1;
@@ -278,13 +311,14 @@ export function createSolarScene(canvas, options={}) {
     if(continuousSelection){intro=false;transition=1;}else beginTransition();
   }
   function overview(){
-    selected=null;hoveredMoon=null;options.onHoverMoon?.(null);
+    selected=null;outwardArmed=false;hoveredMoon=null;options.onHoverMoon?.(null);
     if(continuousSelection){
-      const desired=new THREE.Spherical().setFromVector3(cameraGoal.clone().sub(overviewLook));
+      freeViewAnchored=keepReleaseView;freeLook.copy(keepReleaseView?look:overviewLook);
+      const desired=new THREE.Spherical().setFromVector3(cameraGoal.clone().sub(freeLook));
       const base=new THREE.Spherical().setFromVector3(overviewPos.clone().sub(overviewLook));
       overviewZoom=desired.radius/base.radius;userYaw=desired.theta-base.theta;userPitch=desired.phi-base.phi;
       transition=1;intro=false;
-    }else{userYaw=0;userPitch=0;overviewZoom=1;beginTransition();}
+    }else{freeViewAnchored=false;freeLook.copy(overviewLook);userYaw=0;userPitch=0;overviewZoom=1;beginTransition();}
   }
   function skipIntro(){intro=false;beginTransition();}
   const wheel=createWheelNavigator({
@@ -327,6 +361,7 @@ export function createSolarScene(canvas, options={}) {
     if(Math.abs(nextFov-camera.fov)>.00001){camera.fov=nextFov;camera.updateProjectionMatrix();}
     // Selection changes the camera and popup, never the surrounding solar system.
     camera.lookAt(look);renderer.render(scene,camera);
+    releaseIfSmall();
     // Count the close-up hold from its first finished render, including cold shader compilation.
     if(intro&&!introRendered){introRendered=true;introElapsed=0;last=performance.now();}
     if(frame++%2===0){
@@ -338,7 +373,7 @@ export function createSolarScene(canvas, options={}) {
         const x=(projected.x*.5+.5)*width,y=(-.5*projected.y+.5)*height;
         const intersectsViewport=x+radius>0&&x-radius<width&&y+radius>0&&y-radius<height;
         const visible=p.group.visible&&projected.z<1&&projected.z>-1&&intersectsViewport;
-        labels.push({id,x,y,radius,visible});
+        labels.push({id,x,y,radius,visible,globeWidth:globeWidth(p)});
       }
       options.onFrame?.({labels,focus:selected,paused,intro,transition,moons:satellites.labels(camera,width,height)});
     }
@@ -354,8 +389,9 @@ function createFallback(canvas,options) {
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const pixelSky=createPixelSky(canvas),paintSurfaceDetail=createFallbackDetail(c);
   let selected=null,points=[],moonPoints=[],zoom=1,paused=false,suspended=!!options.suspended,disposed=false,elapsed=0,last=performance.now(),raf=0,panX=0,panY=0,userYaw=0,userPitch=0,introStart=null,introResolve=null;
-  const viewLook=new THREE.Vector3(),worldTarget=new THREE.Vector3();
-  let renderZoom=1,continuousSelection=false;
+  const viewLook=new THREE.Vector3(),worldTarget=new THREE.Vector3(),freeLook=new THREE.Vector3();
+  let renderZoom=1,continuousSelection=false,outwardArmed=false,keepReleaseView=false,emittingFrame=false;
+  let lastViewWidth=0,lastViewHeight=0;
   function playIntro(){
     if(reduced){overview();return Promise.resolve();}
     selected=null;zoom=.12;introStart=performance.now();
@@ -370,12 +406,13 @@ function createFallback(canvas,options) {
   function draw(){
     if(disposed||suspended||document.hidden)return;
     const r=canvas.getBoundingClientRect();if(r.width<1||r.height<1)return;
+    if(r.width!==lastViewWidth||r.height!==lastViewHeight){outwardArmed=false;lastViewWidth=r.width;lastViewHeight=r.height;}
     const pixels=pixelSize(r.width,r.height),cw=pixels.width,ch=pixels.height;
     if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch;pixelSky.resize(r.width,r.height);}
     c.setTransform(cw/r.width,0,0,ch/r.height,0,0);c.imageSmoothingEnabled=false;const w=r.width,h=r.height;c.clearRect(0,0,w,h);
     if(introStart!==null)renderZoom=zoom;else renderZoom+=(zoom-renderZoom)*(reduced?1:.22);
     if(selected){const p=PLANETS.find(p=>p.id===selected);worldTarget.copy(orbitPosition(p,p.phase+elapsed*.045*MOTION_RATE/p.period));}
-    else worldTarget.set(0,0,0);
+    else worldTarget.copy(freeLook);
     viewLook.lerp(worldTarget,reduced||renderZoom<.08?1:.16);
     const scale=Math.min(w/100,h/68)/renderZoom,ox=w*.48+panX,oy=h*.52+panY;
     const elevation=Math.max(-1.45,Math.min(1.45,.5-userPitch)),yawCos=Math.cos(userYaw),yawSin=-Math.sin(userYaw),pitchSin=Math.sin(elevation),pitchCos=Math.cos(elevation);
@@ -436,7 +473,10 @@ function createFallback(canvas,options) {
     // One shared depth order lets neighboring worlds occlude each other naturally.
     paint.sort((a,b)=>a.depth-b.depth);for(const item of paint)item.draw();
     const moonVisible=m=>onScreen(m.x,m.y,m.radius)&&!points.some(p=>p.depth>m.depth&&Math.hypot(m.x-p.x,m.y-p.y)<Math.max(0,p.r-m.radius*.6));
-    options.onFrame?.({labels:points.map(p=>({id:p.id,x:p.x,y:p.y,radius:p.r,visible:onScreen(p.x,p.y,p.r)})),focus:selected,paused,intro:introStart!==null,transition:1,moons:moonPoints.map(m=>({id:m.moon.id,name:m.moon.name,parent:m.moon.parent,x:m.x,y:m.y,radius:m.radius,visible:moonVisible(m)}))});
+    emittingFrame=true;
+    releaseIfSmall(w);
+    options.onFrame?.({labels:points.map(p=>({id:p.id,x:p.x,y:p.y,radius:p.r,globeWidth:p.r*2,visible:onScreen(p.x,p.y,p.r)})),focus:selected,paused,intro:introStart!==null,transition:1,moons:moonPoints.map(m=>({id:m.moon.id,name:m.moon.name,parent:m.moon.parent,x:m.x,y:m.y,radius:m.radius,visible:moonVisible(m)}))});
+    emittingFrame=false;
   }
   const ro=new ResizeObserver(draw);ro.observe(canvas);
   function pick(e){
@@ -457,12 +497,26 @@ function createFallback(canvas,options) {
   function move(e){const moon=hitMoon(e);options.onHoverMoon?.(moon);if(moon){canvas.style.cursor='help';return;}const id=pick(e);canvas.style.cursor=id&&id!==selected?'pointer':'grab';options.onHover?.(id===selected?null:id);}
   const inputActive=()=>!disposed&&!suspended&&!document.body.classList.contains('entering')&&!document.body.classList.contains('contents-open')&&!document.body.classList.contains('is-page');
   function approach(id){continuousSelection=true;try{if(options.onSelect)options.onSelect(id);else focus(id);}finally{continuousSelection=false;}}
+  function releaseAnchor(keepView=false){
+    keepReleaseView=keepView;continuousSelection=true;
+    try{if(options.onOverview)options.onOverview();else overview();}finally{continuousSelection=false;keepReleaseView=false;}
+  }
+  function releaseIfSmall(width){
+    const body=points.find(p=>p.id===selected);
+    if(!body||!outwardArmed||!desktopPointer())return;
+    if(body.r*2<width*.1){releaseAnchor(true);return;}
+    const targetWidth=body.r*2*renderZoom/zoom;
+    if(Math.abs(renderZoom-zoom)<zoom*.00001&&targetWidth>=width*.1)outwardArmed=false;
+  }
   function zoomBy(delta,event){
+    if(delta<0)outwardArmed=false;
     if(!selected&&delta<0&&event){const id=pick(event);if(id&&id!=='sun')approach(id);}
     const r=canvas.getBoundingClientRect(),base=Math.min(r.width/100,r.height/68),p=PLANETS.find(p=>p.id===selected);
     const minimum=p?p.radius*base/(Math.max(r.width,r.height)*32):.00001;
+    const body=points.find(body=>body.id===selected);
+    if(delta>0&&desktopPointer()&&body&&body.r*2<r.width*.1)zoom=Math.max(zoom,renderZoom);
     zoom=Math.max(minimum,Math.min(4,zoom*Math.exp(delta*.002)));
-    if(selected&&delta>0&&zoom>1.1){continuousSelection=true;try{if(options.onOverview)options.onOverview();else overview();}finally{continuousSelection=false;}}
+    if(selected&&delta>0){outwardArmed=desktopPointer();if(desktopPointer())releaseIfSmall(r.width);else if(zoom>1.1)releaseAnchor();}
     draw();
   }
   function dragGain(){
@@ -478,11 +532,16 @@ function createFallback(canvas,options) {
   },onZoom:zoomBy,onTap:click,onHover:move,onLeave:()=>options.onHoverMoon?.(null)});
   function stopIntro(){introStart=null;introResolve?.();introResolve=null;}
   function focus(id){
-    const p=PLANETS.find(p=>p.id===id);if(!p)return;stopIntro();selected=id;options.onHoverMoon?.(null);
+    const p=PLANETS.find(p=>p.id===id);if(!p)return;stopIntro();selected=id;outwardArmed=false;options.onHoverMoon?.(null);
     if(!continuousSelection){const r=canvas.getBoundingClientRect();zoom=Math.min(zoom,Math.min(r.width/100,r.height/68)*p.radius/(Math.min(r.width,r.height)*.16));}
     draw();
   }
-  function overview(){stopIntro();selected=null;options.onHoverMoon?.(null);if(!continuousSelection){zoom=1;userYaw=0;userPitch=0;panX=0;panY=0;}draw();}
+  function overview(){
+    stopIntro();selected=null;outwardArmed=false;options.onHoverMoon?.(null);
+    if(continuousSelection)freeLook.copy(keepReleaseView?viewLook:new THREE.Vector3());
+    else{freeLook.set(0,0,0);zoom=1;userYaw=0;userPitch=0;panX=0;panY=0;}
+    if(!emittingFrame)draw();
+  }
   const wheel=createWheelNavigator({
     isActive:()=>inputActive()&&!document.hidden&&canvas.getBoundingClientRect().width>1&&canvas.getBoundingClientRect().height>1,
     height:()=>canvas.getBoundingClientRect().height,pick,selected:()=>selected,onEnter:approach,onZoom:zoomBy
