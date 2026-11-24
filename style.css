@@ -138,3 +138,5 @@ input,select,textarea{font:inherit}
 .sun-gallery__photo:hover{border-color:var(--gold)}
 .sun-gallery__image{display:block;width:100%;height:auto;max-width:100%;image-rendering:auto}
 @media(max-width:700px){.sun-gallery{grid-template-columns:minmax(0,1fr);gap:20px;margin-top:28px}.sun-gallery__photo{grid-column:1}}
+
+.about-bio a{color:var(--gold);text-decoration:underline;text-underline-offset:3px}

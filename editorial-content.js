@@ -21,7 +21,7 @@ export function createEditorialPages({ card, external, orbitArt }) {
       planet: 'sun',
       title: 'About me',
       body: `<div class="about-bio">
-        <p class="page-prose">I'm Jack. Currently wrapping up my final year of my BSc at UBC. I love to learn things about the world; but not as much as I'm excited to build things yet to come. Right now, I'm learning about world models, spiking nns, rl, ancient civilizations and cultures (Aztecs, Teotihuacán's), trying to get one in a krillion, among other things.</p>
+        <p class="page-prose">I'm Jack. Currently wrapping up my final year of my BSc at UBC. I love to learn things about the world; but not as much as I'm excited to build things yet to come. Right now, I'm learning about world models, spiking nns, rl, ancient civilizations and cultures (Aztecs, Teotihuacán's). Current things I am attempting: creating a world model based on <a href="https://diep.io/" target="_blank" rel="noopener noreferrer">diep.io</a>, designing a jacket, and building a pet robot.</p>
         <p class="page-prose">I'm always open to a new conversation, feel free to connect with me!</p>
       </div><nav class="social-links" aria-label="Social profiles">
         ${external(source.linkedin, 'LinkedIn')}
