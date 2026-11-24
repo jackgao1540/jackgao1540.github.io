@@ -60,6 +60,8 @@ export function moonPosition(moon,days,parentTilt=0,meanAnomalyOverride) {
 function randomSource(id){let s=[...id].reduce((a,c)=>a+c.charCodeAt(0),921);return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
 const PALETTES={moon:'#aaa9a3',phobos:'#857465',deimos:'#a38f79',io:'#e7c76e',europa:'#ddd6ba',ganymede:'#aaa395',callisto:'#847e74',mimas:'#b8b9b7',enceladus:'#e4e8e4',tethys:'#ced0cc',dione:'#c1c6c7',rhea:'#c7c9c5',titan:'#c99347',iapetus:'#beb3a0',miranda:'#afb6b4',ariel:'#c2c7c6',umbriel:'#727775',titania:'#b2b6b2',oberon:'#a3a49d',proteus:'#858c88',triton:'#d3cac1',charon:'#aaa5a3'};
 
+export const moonColor=id=>PALETTES[id]||'#b6b4aa';
+
 export function createMoonTexture(moon){
   const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;
   const c=canvas.getContext('2d'),w=512,h=256,r=randomSource(moon.id);
@@ -98,18 +100,21 @@ export function createMoonSystems(planets){
   for(const [id,parent] of planets){
     if(id==='sun')continue;
     const records=moonDisplayLayout({...parent.config,radius:parent.radius});
-    const group=new THREE.Group();group.name=`${id}-satellites`;group.visible=false;
+    const group=new THREE.Group();group.name=`${id}-satellites`;group.visible=true;
     parent.group.add(group);const bodies=[];
     for(const moon of records){
       const mesh=new THREE.Mesh(new THREE.SphereGeometry(moon.displayRadius,24,16),new THREE.MeshStandardMaterial({color:PALETTES[moon.id]||'#b6b4aa',roughness:.97,metalness:0}));
       mesh.userData.moon=moon;group.add(mesh);pickables.push(mesh);
+      // A depth-tested single scene pixel keeps distant moons visible on the low-res grid.
+      const pixel=new THREE.Sprite(new THREE.SpriteMaterial({color:PALETTES[moon.id]||'#b6b4aa',depthTest:true,depthWrite:true}));
+      pixel.userData.moon=moon;group.add(pixel);pickables.push(pixel);
       if(moon.id==='phobos'||moon.id==='deimos')mesh.scale.set(1.22,.84,.88);
       if(moon.id==='titan'){
         const haze=new THREE.Mesh(new THREE.SphereGeometry(moon.displayRadius*1.045,24,16),new THREE.MeshBasicMaterial({color:0xe4b367,transparent:true,opacity:.10,side:THREE.BackSide,depthWrite:false}));mesh.add(haze);
       }
       const points=[];for(let i=0;i<=128;i++)points.push(moonPosition(moon,0,parent.config.tilt,i/128*TAU));
       const track=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:moon.id==='titan'?0xc6aa71:0x8da9b1,transparent:true,opacity:.11,depthWrite:false}));group.add(track);
-      bodies.push({moon,mesh,track});
+      bodies.push({moon,mesh,pixel,track});
     }
     const extent=records.reduce((max,m)=>Math.max(max,m.displayOrbit*(1+(m.eccentricity||0))+m.displayRadius),0);
     systems.set(id,{group,bodies,extent});
@@ -117,27 +122,46 @@ export function createMoonSystems(planets){
   return {
     systems,pickables,
     extent(id){return systems.get(id)?.extent||0;},
-    update(days,selected,transition){
-      for(const [id,system] of systems){system.group.visible=id===selected&&transition>.15;
-        if(!system.group.visible)continue;
-        const parent=planets.get(id);
+    update(days,selected,camera,height){
+      const world=new THREE.Vector3(),projected=new THREE.Vector3();
+      const pixelsPerUnit=height/(2*Math.tan(camera.fov*Math.PI/360)),logicalPixel=camera.aspect*height<=700?3:4;
+      for(const [id,system] of systems){
+        const parent=planets.get(id);parent.group.updateWorldMatrix(true,false);
+        parent.group.getWorldPosition(world);
+        const parentPixels=parent.radius*pixelsPerUnit/camera.position.distanceTo(world);
         for(const body of system.bodies){
-          // Hidden systems have no surface textures to generate or upload.
-          if(!body.mesh.material.map){body.mesh.material.map=createMoonTexture(body.moon);body.mesh.material.color.set(0xffffff);body.mesh.material.needsUpdate=true;}
-          body.mesh.position.copy(moonPosition(body.moon,days,parent.config.tilt));body.mesh.rotation.y=Math.atan2(body.mesh.position.x,body.mesh.position.z)+Math.PI;}
+          body.mesh.position.copy(moonPosition(body.moon,days,parent.config.tilt));
+          body.mesh.rotation.y=Math.atan2(body.mesh.position.x,body.mesh.position.z)+Math.PI;
+          body.track.visible=id===selected||parentPixels>24;
+          // All moon bodies remain present. Fine maps are uploaded only once large enough to resolve.
+          body.mesh.getWorldPosition(world);projected.copy(world).project(camera);
+          const radius=body.moon.displayRadius*pixelsPerUnit/camera.position.distanceTo(world);
+          body.pixel.position.copy(body.mesh.position);body.pixel.scale.setScalar(logicalPixel*camera.position.distanceTo(world)/pixelsPerUnit);
+          body.pixel.visible=radius<logicalPixel*.5;body.mesh.visible=!body.pixel.visible;
+          if(!body.mesh.material.map&&radius>=5&&projected.z>-1&&projected.z<1&&Math.abs(projected.x)<1.2&&Math.abs(projected.y)<1.2){
+            body.mesh.material.map=createMoonTexture(body.moon);body.mesh.material.color.set(0xffffff);body.mesh.material.needsUpdate=true;
+          }
+        }
       }
     },
     labels(camera,width,height){
-      const labels=[],world=new THREE.Vector3(),projected=new THREE.Vector3();
+      const labels=[],world=new THREE.Vector3(),projected=new THREE.Vector3(),direction=new THREE.Vector3(),offset=new THREE.Vector3();
+      const occluders=[...planets.values()].map(body=>({center:body.mesh.getWorldPosition(new THREE.Vector3()),radius:body.radius}));
       for(const [parent,system] of systems){if(!system.group.visible)continue;
-        for(const {moon,mesh} of system.bodies){mesh.getWorldPosition(world);const distance=camera.position.distanceTo(world);projected.copy(world).project(camera);labels.push({id:moon.id,name:moon.name,parent,x:(projected.x*.5+.5)*width,y:(-.5*projected.y+.5)*height,radius:moon.displayRadius*height/(2*Math.tan(camera.fov*Math.PI/360)*distance),visible:projected.z>-1&&projected.z<1&&Math.abs(projected.x)<1&&Math.abs(projected.y)<1});}
+        for(const {moon,mesh} of system.bodies){mesh.getWorldPosition(world);const distance=camera.position.distanceTo(world);projected.copy(world).project(camera);
+          direction.copy(world).sub(camera.position).normalize();
+          const occluded=occluders.some(body=>{offset.copy(body.center).sub(camera.position);const along=offset.dot(direction),r=Math.max(0,body.radius-moon.displayRadius*.6);return along>0&&along<distance&&offset.lengthSq()-along*along<r*r;});
+          labels.push({id:moon.id,name:moon.name,parent,x:(projected.x*.5+.5)*width,y:(-.5*projected.y+.5)*height,radius:moon.displayRadius*height/(2*Math.tan(camera.fov*Math.PI/360)*distance),visible:!occluded&&projected.z>-1&&projected.z<1&&Math.abs(projected.x)<1&&Math.abs(projected.y)<1});}
       }return labels;
     },
-    hit(raycaster,selected){
-      const system=systems.get(selected);if(!system?.group.visible)return null;
-      const moon=raycaster.intersectObjects(system.bodies.map(b=>b.mesh),false)[0];if(!moon)return null;
-      const parent=raycaster.intersectObject(planets.get(selected).mesh,false)[0];
-      return parent&&parent.distance<moon.distance?null:moon.object.userData.moon;
+    hit(raycaster){
+      const moon=raycaster.intersectObjects(pickables.filter(body=>body.visible),false)[0];if(!moon)return null;
+      // A nearer planet must win over a moon hidden behind its disk.
+      for(const parent of planets.values()){
+        const obstruction=raycaster.intersectObject(parent.mesh,false)[0];
+        if(obstruction&&obstruction.distance<moon.distance)return null;
+      }
+      return moon.object.userData.moon;
     }
   };
 }
