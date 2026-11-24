@@ -250,7 +250,7 @@ function renderPage(path, page) {
     <header class="page-heading"><div>
       <h1>${page.title}</h1>
     </div><span class="page-symbol" aria-hidden="true">${planet.symbol}</span></header>
-    <p class="page-deck">${page.deck}</p>${page.body}
+    ${page.deck ? `<p class="page-deck">${page.deck}</p>` : ''}${page.body}
     <nav class="page-footer" aria-label="Page navigation">
       <a href="#/">← Solar system</a><a href="#/${next}">Next: ${pages[next].title} ↗</a>
     </nav>`;
