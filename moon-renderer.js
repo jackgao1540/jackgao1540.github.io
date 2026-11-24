@@ -1,3 +1,4 @@
+import {sealLongitude} from './pixel-renderer.js';
 import * as THREE from './assets/vendor/three.module.js';
 import { MOONS } from './moons.js';
 
@@ -88,7 +89,8 @@ export function createMoonTexture(moon){
   if(moon.id==='iapetus'){c.fillStyle='rgba(44,35,27,.75)';c.beginPath();c.ellipse(w*.7,h*.5,w*.3,h*.65,0,0,TAU);c.fill();}
   if(moon.id==='charon'){c.fillStyle='rgba(104,57,44,.62)';c.fillRect(0,0,w,42);c.fillStyle='rgba(213,212,204,.3)';c.fillRect(0,h*.55,w,h*.16);}
   if(moon.id==='mimas'){c.strokeStyle='rgba(61,65,64,.5)';c.lineWidth=4;c.beginPath();c.ellipse(w*.32,h*.48,28,23,0,0,TAU);c.stroke();}
-  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=2;return map;
+  sealLongitude(c,w,h);
+  const map=new THREE.CanvasTexture(canvas);map.wrapS=THREE.RepeatWrapping;map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=1;return map;
 }
 
 export function createMoonSystems(planets){
@@ -99,7 +101,7 @@ export function createMoonSystems(planets){
     const group=new THREE.Group();group.name=`${id}-satellites`;group.visible=false;
     parent.group.add(group);const bodies=[];
     for(const moon of records){
-      const map=createMoonTexture(moon),mesh=new THREE.Mesh(new THREE.SphereGeometry(moon.displayRadius,32,24),new THREE.MeshStandardMaterial({map,roughness:.97,metalness:0}));
+      const mesh=new THREE.Mesh(new THREE.SphereGeometry(moon.displayRadius,24,16),new THREE.MeshStandardMaterial({color:PALETTES[moon.id]||'#b6b4aa',roughness:.97,metalness:0}));
       mesh.userData.moon=moon;group.add(mesh);pickables.push(mesh);
       if(moon.id==='phobos'||moon.id==='deimos')mesh.scale.set(1.22,.84,.88);
       if(moon.id==='titan'){
@@ -119,7 +121,10 @@ export function createMoonSystems(planets){
       for(const [id,system] of systems){system.group.visible=id===selected&&transition>.15;
         if(!system.group.visible)continue;
         const parent=planets.get(id);
-        for(const body of system.bodies){body.mesh.position.copy(moonPosition(body.moon,days,parent.config.tilt));body.mesh.rotation.y=Math.atan2(body.mesh.position.x,body.mesh.position.z)+Math.PI;}
+        for(const body of system.bodies){
+          // Hidden systems have no surface textures to generate or upload.
+          if(!body.mesh.material.map){body.mesh.material.map=createMoonTexture(body.moon);body.mesh.material.color.set(0xffffff);body.mesh.material.needsUpdate=true;}
+          body.mesh.position.copy(moonPosition(body.moon,days,parent.config.tilt));body.mesh.rotation.y=Math.atan2(body.mesh.position.x,body.mesh.position.z)+Math.PI;}
       }
     },
     labels(camera,width,height){

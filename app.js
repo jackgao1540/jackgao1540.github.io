@@ -92,8 +92,7 @@ function positionMoonName() {
   let x = Math.max(12, Math.min(innerWidth - box.width - 12, projected.x + projected.radius + 10));
   let y = Math.max(88, projected.y - projected.radius - box.height - 8);
   const destination = $('#spatial-label');
-  const domPlaque = !destination.hidden && !destination.classList.contains('scene-link-accessible') ? destination.getBoundingClientRect() : null;
-  const plaque = moonFrame.plaqueBounds || domPlaque;
+  const plaque = !destination.hidden ? destination.getBoundingClientRect() : null;
   if (plaque && x < plaque.right + 10 && x + box.width > plaque.left - 10 && y < plaque.bottom + 10 && y + box.height > plaque.top - 10) {
     y = Math.max(88, plaque.top - box.height - 12);
   }
@@ -161,7 +160,7 @@ function renderDestination(planet) {
     </a>`;
 }
 
-function showDestination(planet, projected, spatialLink = false) {
+function showDestination(planet, projected) {
   const label = $('#spatial-label');
   if (readySelection !== planet.id) {
     renderDestination(planet);
@@ -170,7 +169,8 @@ function showDestination(planet, projected, spatialLink = false) {
   }
   {
     label.hidden = false;
-    label.classList.toggle('scene-link-accessible', spatialLink);
+    label.classList.add('scene-destination');
+    label.classList.toggle('near-surface', (projected?.radius || 0) > innerHeight * .3);
     label.classList.toggle('fallback-destination', fallback);
     const x = fallback ? innerWidth / 2 : projected?.x ?? innerWidth / 2;
     const y = fallback
@@ -244,8 +244,7 @@ function renderFrame(frame) {
     $('#spatial-label').hidden = true;
     return;
   }
-  const inScene = frame.spatialLink === true || frame.spatialLink?.visible === true;
-  showDestination(byId[selected], projected, inScene);
+  showDestination(byId[selected], projected);
 }
 
 function renderPage(path, page) {
@@ -267,6 +266,7 @@ function renderPage(path, page) {
       <a href="#/">← Solar system</a><a href="#/${next}">Next: ${pages[next].title} ↗</a>
     </nav>`;
   scene?.setPaused(true);
+  scene?.setSuspended?.(true);
   window.scrollTo(0, 0);
   $('#page').focus({ preventScroll: true });
 }
@@ -284,6 +284,7 @@ function route({ initial = false } = {}) {
   document.body.classList.remove('is-page');
   document.title = 'Jack Gao — A collection in orbit';
   scene?.setPaused(paused);
+  scene?.setSuspended?.(entrance.active());
   const match = path.match(/^planet\/(\w+)$/);
   if (match && byId[match[1]]) choosePlanet(match[1], false);
   else overview(false, initial);

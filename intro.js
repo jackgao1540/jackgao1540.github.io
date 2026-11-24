@@ -1,3 +1,4 @@
+import {pixelSize} from './pixel-renderer.js';
 const COPY = ['Jack Gao', 'A collection of myself displayed in orbit.'];
 const homeRoute = () => !location.hash || /^#\/?$/.test(location.hash);
 
@@ -51,9 +52,9 @@ export function createEntrance({ reduced, onEnter, onComplete }) {
   });
   function drawBirth(progress) {
     const c = canvas.getContext('2d'); if (!c) return;
-    const dpr = Math.min(devicePixelRatio, 1.75), w = innerWidth, h = innerHeight;
-    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
-    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+    const w = innerWidth, h = innerHeight, pixels = pixelSize(w,h);
+    if (canvas.width !== pixels.width || canvas.height !== pixels.height) { canvas.width = pixels.width; canvas.height = pixels.height; }
+    c.setTransform(pixels.width/w, 0, 0, pixels.height/h, 0, 0); c.clearRect(0, 0, w, h);
     const x = w / 2, y = h / 2, scale = Math.max(w, h), expansion = Math.max(0, (progress - .22) / .78);
     const bloom = Math.sin(Math.min(1, progress / .72) * Math.PI / 2), fade = 1 - Math.pow(Math.max(0, (progress - .62) / .38), 2);
     c.globalCompositeOperation = 'lighter';
