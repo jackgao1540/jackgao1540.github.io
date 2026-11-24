@@ -8,7 +8,7 @@ const roles = [
     id:'amazon-2026', company:'Amazon', title:'Software Engineer Intern', location:'Vancouver, BC',
     start:'2026-06', end:'2026-09', dates:'June 2026 - September 2026',
     bullets:[
-      'Architected a secure telemetry platform with CloudWatch Logs, Firehose, Lambda, S3, Parquet, and QuickSight. Unified seven event sources and captured <strong>1,300+ events/minute</strong> across <strong>50+ production ML workbenches</strong>.',
+      'Architected a secure telemetry platform with CloudWatch Logs, Firehose, Lambda, S3, Parquet, and QuickSight. Unified seven event sources and captured <strong>1,300+ events/minute</strong> across <strong>30+ production ML workbenches</strong>.',
       'Automated detection of suspicious activity, including bulk customer-data downloads and uploads of unapproved third-party models to S3, using specialized Bedrock agents and Model Context Protocol (MCP) tools.',
       'Built a monitoring dashboard and investigation agent that gave engineering and leadership a unified view of security activity across ML workbenches.'
     ]
@@ -30,7 +30,6 @@ const roles = [
       'Reduced average page-load time by <strong>57%</strong> by leading a migration to RTK Query and implementing custom error-logging middleware and server-side rendering.',
       'Architected a high-throughput inference-gateway sidecar for multimodal LLM requests, with automated retries and fallback logic for production reliability.',
       'Built a scalable data-access layer with Java, Spring Boot, and DynamoDB, plus a full-stack query engine supporting search, sort, and filter operations across <strong>millions of data points</strong>.',
-      'Created a high-fidelity MirageJS mock environment for local integration testing of distributed microservices, reducing reliance on live staging environments.'
     ]
   },
   {
@@ -50,7 +49,7 @@ const roles = [
       'Automated CI/CD workflows with Python and Shell to trigger comprehensive unit-test suites on each pull request and track execution events from initiation through completion.'
     ]
   },
-  {id:'hudsons-bay-2022', company:"Hudson's Bay", title:'Sales Associate', start:'2022', dates:'2022', bullets:[]},
+  {id:'hudsons-bay-2022', company:"Hudson's Bay", title:'Sales Associate', location:'Vancouver, BC', start:'2022', dates:'2022', bullets:[]},
   {id:'amazon-2021', company:'Amazon', title:'Fulfilment Associate', location:'Toronto', start:'2021', dates:'2021', bullets:[]},
   {id:'gap-2019', company:'Gap', title:'Sales Associate', location:'Toronto', start:'2019', end:'2020', dates:'2019 - 2020', bullets:[]}
 ];
