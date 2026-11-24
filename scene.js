@@ -28,7 +28,8 @@ function orbitPosition(p,meanAnomaly){
   const x=p.orbit*(Math.cos(E)-p.eccentricity),z=p.orbit*Math.sqrt(1-p.eccentricity*p.eccentricity)*Math.sin(E),inc=p.inclination*Math.PI/180;
   return new THREE.Vector3(x,z*Math.sin(inc),z*Math.cos(inc));
 }
-// Horizontal silhouette of a sphere in CSS pixels, including off-axis perspective.
+// Sphere silhouette in CSS pixels, including off-axis perspective. Pass the
+// camera-space X offset for width or Y offset for the corresponding height.
 export function projectedGlobeWidth(radius,x,depth,fov,height){
   if(depth<=radius)return Infinity;
   return radius*Math.sqrt(depth*depth+x*x-radius*radius)/(depth*depth-radius*radius)*height/Math.tan(fov*Math.PI/360);
@@ -380,7 +381,10 @@ export function createSolarScene(canvas, options={}) {
         const x=(projected.x*.5+.5)*width,y=(-.5*projected.y+.5)*height;
         const intersectsViewport=x+radius>0&&x-radius<width&&y+radius>0&&y-radius<height;
         const visible=p.group.visible&&projected.z<1&&projected.z>-1&&intersectsViewport;
-        labels.push({id,x,y,radius,visible,globeWidth:globeExtent(p),globeHeight:globeExtent(p,true)});
+        projected.copy(world).applyMatrix4(camera.matrixWorldInverse);
+        const globeWidth=projectedGlobeWidth(p.radius,projected.x,-projected.z,camera.fov,height);
+        const globeHeight=projectedGlobeWidth(p.radius,projected.y,-projected.z,camera.fov,height);
+        labels.push({id,x,y,radius,visible,globeWidth,globeHeight});
       }
       options.onFrame?.({labels,focus:selected,paused,intro,transition,moons:satellites.labels(camera,width,height)});
     }
