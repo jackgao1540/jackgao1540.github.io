@@ -35,6 +35,13 @@ export function projectedGlobeWidth(radius,x,depth,fov,height){
 }
 let finePointerQuery;
 const desktopPointer=()=>(finePointerQuery??=matchMedia('(pointer: fine)')).matches;
+// Use the visible scene in CSS pixels, including mobile browser chrome changes.
+function releaseCutoff(canvas,width){
+  if(desktopPointer())return width*.1;
+  const bounds=canvas.getBoundingClientRect(),viewport=window.visualViewport;
+  const top=viewport?.offsetTop||0,bottom=top+(viewport?.height||window.innerHeight);
+  return Math.max(0,Math.min(bounds.bottom,bottom)-Math.max(bounds.top,top))*.15;
+}
 // A wheel stream may select an anchor and keep zooming without a gesture lockout.
 export function createWheelNavigator({isActive,height,pick,selected,onEnter,onZoom}) {
   return function wheel(event){
@@ -259,14 +266,14 @@ export function createSolarScene(canvas, options={}) {
     keepReleaseView=keepView;continuousSelection=true;
     try{if(options.onOverview)options.onOverview();else overview();}finally{continuousSelection=false;keepReleaseView=false;}
   }
-  function globeWidth(body){
+  function globeExtent(body,vertical=false){
     body.group.getWorldPosition(world);projected.copy(world).applyMatrix4(camera.matrixWorldInverse);
-    return projectedGlobeWidth(body.radius,projected.x,-projected.z,camera.fov,height);
+    return projectedGlobeWidth(body.radius,vertical?projected.y:projected.x,-projected.z,camera.fov,height);
   }
   function releaseIfSmall(){
-    if(!selected||!outwardArmed||!desktopPointer())return;
-    const body=planets.get(selected),cutoff=width*.1;
-    if(globeWidth(body)<cutoff){releaseAnchor(true);return;}
+    if(!selected||!outwardArmed)return;
+    const body=planets.get(selected),cutoff=releaseCutoff(canvas,width);
+    if(globeExtent(body,!desktopPointer())<cutoff){releaseAnchor(true);return;}
     const requested=Math.max(minFocusDistance(),focusBaseDistance*focusZoom);
     const targetWidth=projectedGlobeWidth(body.radius,0,requested,fovGoal,height);
     const settled=Math.abs(camera.position.distanceTo(trackedCenter)-requested)<requested*.00001&&Math.abs(camera.fov-fovGoal)<.001&&transition>=1;
@@ -279,17 +286,15 @@ export function createSolarScene(canvas, options={}) {
     if(!selected&&delta<0&&event){const id=pick(event);if(id)approach(id);}
     const factor=Math.exp(delta*.002);
     if(selected){
-      if(delta>0)outwardArmed=desktopPointer();
-      if(outwardArmed&&globeWidth(planets.get(selected))<width*.1){
+      if(delta>0)outwardArmed=true;
+      if(outwardArmed&&globeExtent(planets.get(selected),!desktopPointer())<releaseCutoff(canvas,width)){
         // Cancel a pending fly-in before releasing an already-small selection.
         const center=planets.get(selected).group.getWorldPosition(new THREE.Vector3());
         cameraGoal.copy(camera.position).sub(center).multiplyScalar(factor).add(center);
         releaseAnchor(true);return;
       }
       focusZoom=Math.max(minFocusDistance()/focusBaseDistance*.06,focusZoom*factor);
-      const center=planets.get(selected).group.getWorldPosition(new THREE.Vector3());
-      const outer=Math.max(overviewPos.distanceTo(center),focusBaseDistance*1.25);
-      if(delta>0){target();if(desktopPointer())releaseIfSmall();else if(focusZoom*focusBaseDistance>outer)releaseAnchor();}
+      if(delta>0){target();releaseIfSmall();}
     }else overviewZoom=Math.max(freeViewAnchored ? .0001 : .12,Math.min(Math.max(4,overviewZoom),overviewZoom*factor));
   }
   function dragGain(){
@@ -375,7 +380,7 @@ export function createSolarScene(canvas, options={}) {
         const x=(projected.x*.5+.5)*width,y=(-.5*projected.y+.5)*height;
         const intersectsViewport=x+radius>0&&x-radius<width&&y+radius>0&&y-radius<height;
         const visible=p.group.visible&&projected.z<1&&projected.z>-1&&intersectsViewport;
-        labels.push({id,x,y,radius,visible,globeWidth:globeWidth(p)});
+        labels.push({id,x,y,radius,visible,globeWidth:globeExtent(p),globeHeight:globeExtent(p,true)});
       }
       options.onFrame?.({labels,focus:selected,paused,intro,transition,moons:satellites.labels(camera,width,height)});
     }
@@ -477,7 +482,7 @@ function createFallback(canvas,options) {
     const moonVisible=m=>onScreen(m.x,m.y,m.radius)&&!points.some(p=>p.depth>m.depth&&Math.hypot(m.x-p.x,m.y-p.y)<Math.max(0,p.r-m.radius*.6));
     emittingFrame=true;
     releaseIfSmall(w);
-    options.onFrame?.({labels:points.map(p=>({id:p.id,x:p.x,y:p.y,radius:p.r,globeWidth:p.r*2,visible:onScreen(p.x,p.y,p.r)})),focus:selected,paused,intro:introStart!==null,transition:1,moons:moonPoints.map(m=>({id:m.moon.id,name:m.moon.name,parent:m.moon.parent,x:m.x,y:m.y,radius:m.radius,visible:moonVisible(m)}))});
+    options.onFrame?.({labels:points.map(p=>({id:p.id,x:p.x,y:p.y,radius:p.r,globeWidth:p.r*2,globeHeight:p.r*2,visible:onScreen(p.x,p.y,p.r)})),focus:selected,paused,intro:introStart!==null,transition:1,moons:moonPoints.map(m=>({id:m.moon.id,name:m.moon.name,parent:m.moon.parent,x:m.x,y:m.y,radius:m.radius,visible:moonVisible(m)}))});
     emittingFrame=false;
   }
   const ro=new ResizeObserver(draw);ro.observe(canvas);
@@ -505,10 +510,11 @@ function createFallback(canvas,options) {
   }
   function releaseIfSmall(width){
     const body=points.find(p=>p.id===selected);
-    if(!body||!outwardArmed||!desktopPointer())return;
-    if(body.r*2<width*.1){releaseAnchor(true);return;}
+    if(!body||!outwardArmed)return;
+    const cutoff=releaseCutoff(canvas,width);
+    if(body.r*2<cutoff){releaseAnchor(true);return;}
     const targetWidth=body.r*2*renderZoom/zoom;
-    if(Math.abs(renderZoom-zoom)<zoom*.00001&&targetWidth>=width*.1)outwardArmed=false;
+    if(Math.abs(renderZoom-zoom)<zoom*.00001&&targetWidth>=cutoff)outwardArmed=false;
   }
   function zoomBy(delta,event){
     if(delta<0)outwardArmed=false;
@@ -516,9 +522,9 @@ function createFallback(canvas,options) {
     const r=canvas.getBoundingClientRect(),base=Math.min(r.width/100,r.height/68),p=bodyConfig(selected);
     const minimum=p?p.radius*base/(Math.max(r.width,r.height)*32):.00001;
     const body=points.find(body=>body.id===selected);
-    if(delta>0&&desktopPointer()&&body&&body.r*2<r.width*.1)zoom=Math.max(zoom,renderZoom);
+    if(delta>0&&body&&body.r*2<releaseCutoff(canvas,r.width))zoom=Math.max(zoom,renderZoom);
     zoom=Math.max(minimum,Math.min(4,zoom*Math.exp(delta*.002)));
-    if(selected&&delta>0){outwardArmed=desktopPointer();if(desktopPointer())releaseIfSmall(r.width);else if(zoom>1.1)releaseAnchor();}
+    if(selected&&delta>0){outwardArmed=true;releaseIfSmall(r.width);}
     draw();
   }
   function dragGain(){
