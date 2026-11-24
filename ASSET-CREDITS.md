@@ -58,3 +58,7 @@ Close-range planet albedo includes subtle, derivative-filtered multiscale object
 ## Soundtrack
 
 `assets/audio/ftl-theme.mp3` is an unchanged copy of the MP3 supplied by the site owner for looping playback (FTL: Faster Than Light theme). It is user-provided audio, not an original portfolio composition or a claim of an open license. File SHA-256: `db137ddc09f9a0966bf23695d00178975e6b22195b949c268a39c0d4d725d174`.
+
+## About photographs
+
+The nine photographs in `assets/gallery/` were supplied by the site owner and appear in the supplied sequence, with their full framing. Full-resolution WebP files preserve the supplied pixel dimensions; smaller responsive variants reduce download size. Color profiles are retained where supplied, while ancillary EXIF, GPS and XMP metadata is omitted. The photographs are not artificially pixelated, cropped or color-filtered. No photographer, relationship or location attribution is asserted.

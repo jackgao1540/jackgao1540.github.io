@@ -1,6 +1,8 @@
+import { renderSunGallery } from './sun-gallery.js';
+
 // Social handles are supplied by the user; LinkedIn is also verified by the
 // supplied resume hyperlink and GitHub by the authenticated connected account.
-// Photos and biography are intentionally left to the user's upcoming content.
+// The gallery contains the user's supplied photos; biography remains deferred.
 export const EDITORIAL_SOURCES = Object.freeze({
   github: 'https://github.com/jackgao1540',
   linkedin: 'https://www.linkedin.com/in/jackgao1540',
@@ -27,7 +29,7 @@ export function createEditorialPages({ card, external, orbitArt }) {
         ${external(source.twitter, 'X / Twitter')}
         ${external(source.instagram, 'Instagram')}
         ${external(source.github, 'GitHub')}
-      </nav>`
+      </nav>${renderSunGallery()}`
     },
     'favourites': {
       planet: 'mercury',
