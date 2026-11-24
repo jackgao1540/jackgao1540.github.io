@@ -2,20 +2,21 @@ import { MOONS } from './moons.js';
 import { createEntrance } from './intro.js';
 import { createEditorialPages } from './editorial-content.js';
 import { workHistoryBody, workHistoryDeck } from './work-history.js';
+// Only content bodies have a page destination; other bodies remain name-only selections.
 const planets = [
- {id:'sun',name:'Sun',title:'About me',slug:'about-me',color:'#fcd882',symbol:'☉',fact:'The star at the centre of this solar system.'},
- {id:'mercury',name:'Mercury',title:'Favourite reads',slug:'favourites',color:'#ada397',symbol:'☿',radius:'2,440 km',year:'88 Earth days',fact:'The smallest planet, and the closest to the Sun. Its cratered surface holds a record of ancient impacts.'},
- {id:'venus',name:'Venus',title:'Favourite pictures',slug:'pictures',color:'#dbb98d',symbol:'♀',radius:'6,052 km',year:'225 Earth days',fact:'Wrapped in thick clouds, Venus is the hottest planet in our solar system.'},
- {id:'earth',name:'Earth',title:'Diep Genie',slug:'diep-genie',color:'#71a9b4',symbol:'⊕',radius:'6,371 km',year:'365.25 days',fact:'Our ocean-covered home is the only world known to support life.'},
- {id:'mars',name:'Mars',title:'Posts',slug:'posts',color:'#bc7358',symbol:'♂',radius:'3,390 km',year:'687 Earth days',fact:'A rocky world with enormous volcanoes, deep canyons and evidence of ancient water.'},
- {id:'jupiter',name:'Jupiter',title:'Starred projects',slug:'projects',color:'#d7b69c',symbol:'♃',radius:'69,911 km',year:'11.86 Earth years',fact:'The largest planet: a gas giant with banded clouds and immense storms.'},
- {id:'saturn',name:'Saturn',title:'Work experience',slug:'work',color:'#d3bf8f',symbol:'♄',radius:'58,232 km',year:'29.45 Earth years',fact:'Saturn’s spectacular rings are made of countless pieces of ice and rock.'},
- {id:'uranus',name:'Uranus',title:'Uranus',color:'#98c8c9',symbol:'♅',radius:'25,362 km',year:'84 Earth years',fact:'An ice giant that rotates on its side. Methane in its atmosphere gives Uranus its blue-green colour.'},
- {id:'neptune',name:'Neptune',title:'Neptune',color:'#5381bc',symbol:'♆',radius:'24,622 km',year:'165 Earth years',fact:'Dark, cold and swept by powerful winds, Neptune is the outermost of the eight planets.'},
- {id:'pluto',name:'Pluto',title:'Pluto',color:'#b6a28c',symbol:'♇',radius:'1,188 km',year:'248 Earth years',fact:'A dwarf planet in the Kuiper Belt, with mountains of water ice and a vast heart-shaped region.',source:'https://science.nasa.gov/dwarf-planets/pluto/facts/'}
+ {id:'sun',name:'Sun',title:'About me',slug:'about-me',color:'#fcd882',symbol:'☉'},
+ {id:'mercury',name:'Mercury',title:'Reads & resources',slug:'favourites',color:'#ada397',symbol:'☿'},
+ {id:'venus',name:'Venus',color:'#dbb98d',symbol:'♀'},
+ {id:'earth',name:'Earth',color:'#71a9b4',symbol:'⊕'},
+ {id:'mars',name:'Mars',title:'Posts',slug:'posts',color:'#bc7358',symbol:'♂'},
+ {id:'jupiter',name:'Jupiter',title:'Projects',slug:'projects',color:'#d7b69c',symbol:'♃'},
+ {id:'saturn',name:'Saturn',title:'Work experience',slug:'work',color:'#d3bf8f',symbol:'♄'},
+ {id:'uranus',name:'Uranus',color:'#98c8c9',symbol:'♅'},
+ {id:'neptune',name:'Neptune',color:'#5381bc',symbol:'♆'},
+ {id:'pluto',name:'Pluto',color:'#b6a28c',symbol:'♇'}
 ];
 const byId=Object.fromEntries(planets.map(p=>[p.id,p]));
-const contentsBodies=['sun','jupiter','mercury','mars'].map(id=>byId[id]);
+const contentsBodies=['sun','saturn','jupiter','mercury','mars'].map(id=>byId[id]);
 const contentsRoutes=contentsBodies.map(body=>body.slug);
 const $=s=>document.querySelector(s);
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -31,31 +32,26 @@ const entrance = createEntrance({
 });
 if(reduced) document.body.classList.add('reduced-motion');
 const external=(url,label,cls='card-link')=>`<a class="${cls}" href="${url}" target="_blank" rel="noopener noreferrer">${label} <span aria-hidden="true">↗</span></a>`;
-const card=(meta,title,copy,url,label='Explore project')=>`<article class="content-card"><span class="card-meta">${meta}</span><h2>${title}</h2><p>${copy}</p>${url?external(url,label):''}</article>`;
+const card=(meta,title,copy,url,label='Explore project',extraLink='')=>`<article class="content-card"><span class="card-meta">${meta}</span><h2>${title}</h2><p>${copy}</p>${url?external(url,label):''}${extraLink}</article>`;
 const orbitArt=`<div class="empty-art" aria-hidden="true"><svg viewBox="0 0 150 120"><ellipse cx="75" cy="60" rx="64" ry="24" transform="rotate(-25 75 60)"/><ellipse cx="75" cy="60" rx="45" ry="44"/><circle cx="75" cy="60" r="14"/><circle cx="129" cy="35" r="4" fill="currentColor"/><path d="M75 3v8m0 98v8M10 60H2m146 0h-8"/></svg></div>`;
 const pages={
- 'diep-genie':{planet:'earth',title:'Diep Genie',deck:'Exploring what a model can learn from watching a game.',body:`<div class="page-grid">${card('01 / RESEARCH PROJECT','A world-model prototype','A small Genie-style video world-model research prototype for diep.io, with local validation and latent-action experiments.','https://github.com/jackgao1540/Diep-Genie','Read the repository')}${card('02 / EARLIER EXPLORATION','Genie, in MiniGrid','A toy implementation of Google’s GENIE paper, exploring video tokenization and dynamics in MiniGrid.','https://github.com/jackgao1540/Google-GENIE-MiniGrid-Video-Tokenizer-and-Dynamics-Model','Explore the MiniGrid project')}</div><p class="page-note">This is a research prototype. Implementation details and documented results are available in the public repository.</p>`},
- 'projects':{planet:'jupiter',title:'Starred projects',deck:'A few things I am building. And a bookmark from the wider universe.',body:`<div class="page-grid">${card('BOOKMARK / ML EXPLORE','MLX','An array framework for Apple silicon, by the ML Explore team. A public GitHub star, kept here as a useful reference.','https://github.com/ml-explore/mlx','Visit MLX')}${card('COLLECTION / GITHUB','The stars collection','Browse the current public collection directly on GitHub. ','https://github.com/jackgao1540?tab=stars','Browse starred repositories')}</div><p class="page-eyebrow">MY PUBLIC PROJECTS</p><div class="page-grid">${card('PYTHON / MACHINE LEARNING','Genie in MiniGrid','A toy implementation of Google’s GENIE paper.','https://github.com/jackgao1540/Google-GENIE-MiniGrid-Video-Tokenizer-and-Dynamics-Model')}${card('C++ / INVERSE KINEMATICS','FABRIK · SFML','A segmented arm using FABRIK, with dynamic joint addition and removal.','https://github.com/jackgao1540/FABRIK_SFML')}${card('C++ / EXPLORATION','Mandelbrot','A public C++ repository for exploring the Mandelbrot set.','https://github.com/jackgao1540/mandelbrot')}${card('C++ / PROBLEM SOLVING','DMOJ solutions','Solutions to DMOJ problems over the years.','https://github.com/jackgao1540/dmoj-solutions')}</div>`},
- 'pictures':{planet:'venus',title:'Favourite pictures',deck:'A place to pause. To notice the light. To look a little longer.',body:`<p class="page-note">The photos now live on the Sun’s About me page. <a href="#/about-me">View the gallery ↗</a>.</p>`},
+ 'projects': {
+   planet:'jupiter',
+   title:'Projects',
+   deck:'A few things I am building.',
+   body:`<div class="page-grid">
+     ${card('RESEARCH / WORLD MODELS','Diep-Genie','A small Genie-style video world-model research prototype for diep.io, with local validation and latent-action experiments.','https://github.com/jackgao1540/Diep-Genie','Read the repository',external('https://jackgao1540.github.io/Diep-Genie/', 'View data and reconstructions'))}
+     ${card('PYTHON / MACHINE LEARNING','Genie in MiniGrid','A toy implementation of Google’s GENIE paper, exploring video tokenization and dynamics in MiniGrid.','https://github.com/jackgao1540/Google-GENIE-MiniGrid-Video-Tokenizer-and-Dynamics-Model')}
+     ${card('C++ / INVERSE KINEMATICS','FABRIK · SFML','A segmented arm using FABRIK, with dynamic joint addition and removal.','https://github.com/jackgao1540/FABRIK_SFML')}
+     ${card('C++ / EXPLORATION','Mandelbrot','A public C++ repository for exploring the Mandelbrot set.','https://github.com/jackgao1540/mandelbrot')}
+     ${card('C++ / PROBLEM SOLVING','DMOJ solutions','Solutions to DMOJ problems over the years.','https://github.com/jackgao1540/dmoj-solutions')}
+   </div>
+   <p class="page-note">Diep-Genie is a research prototype. Implementation details and documented results are available in its public repository.</p>`
+ },
 };
 Object.assign(pages,createEditorialPages({card,external,orbitArt}));
 pages.work={planet:'saturn',title:'Work experience',deck:workHistoryDeck,body:workHistoryBody};
-// Keep the existing public showcase linked without copying its media.
-pages['diep-genie'].body = pages['diep-genie'].body.replace(
-  '</article>',
-  external('https://jackgao1540.github.io/Diep-Genie/', 'View data and reconstructions') + '</article>'
-);
-
-// Unlisted planets remain selectable in the scene with direct facts routes.
-for (const planet of planets.filter(planet => !planet.slug)) {
-  pages['about/' + planet.id] = {
-    planet: planet.id,
-    title: planet.name,
-    deck: planet.fact,
-    body: '<dl class="science-facts"><dt>Classification</dt><dd>' + (planet.id === 'pluto' ? 'Dwarf planet' : 'Ice giant') + '</dd><dt>Mean radius</dt><dd>' + planet.radius + '</dd><dt>Orbital period</dt><dd>' + planet.year + '</dd></dl><p class="page-note">Rounded values. ' + external(planet.source || 'https://science.nasa.gov/' + planet.id + '/', 'Read more at NASA', '') + '</p>'
-  };
-}
-$('#destination-list').innerHTML = contentsBodies.map(planet => '<li><a class="contents-destination" href="#/' + (planet.slug || 'about/' + planet.id) + '" style="--planet:' + planet.color + '"><span class="planet-dot ' + planet.id + '" aria-hidden="true"></span><span class="destination-copy"><span class="destination-name">' + planet.name + '</span><span class="planet-name">' + planet.title + '</span></span><span aria-hidden="true">↗</span></a></li>').join('');
+$('#destination-list').innerHTML = contentsBodies.map(planet => '<li><a class="contents-destination" href="#/' + planet.slug + '" style="--planet:' + planet.color + '"><span class="planet-dot ' + planet.id + '" aria-hidden="true"></span><span class="destination-copy"><span class="destination-name">' + planet.name + '</span><span class="planet-name">' + planet.title + '</span></span><span aria-hidden="true">↗</span></a></li>').join('');
 
 // Identification stays transient; it never creates another click target.
 const moonName = document.createElement('div');
@@ -154,7 +150,7 @@ function hideDestination() {
 
 function renderDestination(planet) {
   const label = $('#spatial-label');
-  label.innerHTML = `<span class="popup-name">${planet.name}</span><a class="popup-link" aria-describedby="moon-summary" href="#/${planet.slug || 'about/' + planet.id}">${planet.slug ? planet.title : 'Planet facts'} <span aria-hidden="true">↗</span></a>`;
+  label.innerHTML = `<span class="popup-name">${planet.name}</span>${planet.slug ? `<a class="popup-link" aria-describedby="moon-summary" href="#/${planet.slug}">${planet.title} <span aria-hidden="true">↗</span></a>` : ''}`;
 }
 
 function showDestination(planet, projected) {
@@ -195,7 +191,7 @@ function choosePlanet(id, writeRoute = true) {
   hideMoonName();
   selected = id;
   const names = MOONS.filter(moon => moon.parent === id).map(moon => moon.name);
-  moonSummary.textContent = names.length ? 'Moons in this view: ' + names.join(', ') + '.' : 'No natural moons.';
+  moonSummary.textContent = planet.slug && names.length ? 'Moons in this view: ' + names.join(', ') + '.' : '';
   readySelection = null;
   document.body.classList.add('focused');
   setIndexOpen(false);
@@ -209,7 +205,7 @@ function choosePlanet(id, writeRoute = true) {
   if (writeRoute && location.hash !== `#/planet/${id}`) {
     history.pushState(null, '', `#/planet/${id}`);
   }
-  announce(`${planet.name} selected. ${planet.slug ? planet.title : 'Planet facts'} is available in its popup.`);
+  announce(`${planet.name} selected.${planet.slug ? ' ' + planet.title + ' is available in its popup.' : ''}`);
   if (sceneUnavailable) showStaticDestination(planet);
 }
 
@@ -264,6 +260,14 @@ function route({ initial = false } = {}) {
   let path;
   try { path = decodeURIComponent(location.hash.replace(/^#\/?/, '')); }
   catch { path = ''; }
+  // Preserve old links while keeping all editorial content on its canonical body.
+  const legacyRoutes = { 'diep-genie': 'projects', pictures: 'about-me' };
+  const oldFacts = path.match(/^about\/(\w+)$/);
+  const canonical = legacyRoutes[path] || (oldFacts && byId[oldFacts[1]] ? 'planet/' + oldFacts[1] : null);
+  if (canonical) {
+    path = canonical;
+    history.replaceState(null, '', '#/' + path);
+  }
   if (pages[path]) {
     renderPage(path, pages[path]);
     return;

@@ -12,9 +12,7 @@ export const EDITORIAL_SOURCES = Object.freeze({
   michaelPollan: 'https://michaelpollan.com/books/how-to-change-your-mind/',
   crimeAndPunishment: 'https://standardebooks.org/ebooks/fyodor-dostoevsky/crime-and-punishment/constance-garnett',
   againstAllLikelihood: 'https://arxiv.org/html/2611.09385v1',
-  genieProject: 'https://github.com/jackgao1540/Diep-Genie',
   geniePaper: 'https://arxiv.org/abs/2402.15391',
-  minigridProject: 'https://github.com/jackgao1540/Google-GENIE-MiniGrid-Video-Tokenizer-and-Dynamics-Model',
   minigrid: 'https://minigrid.farama.org/',
   mlx: 'https://github.com/ml-explore/mlx',
   stars: 'https://github.com/jackgao1540?tab=stars',
@@ -49,14 +47,14 @@ export function createEditorialPages({ card, external, orbitArt }) {
       <div class="page-grid">
         ${card('PAPER', 'Against All Likelihood', 'David Lopez-Paz', source.againstAllLikelihood, 'Read the paper · v1')}
       </div>
-      <p class="page-eyebrow">PROJECT REFERENCES</p>
+      <p class="page-eyebrow">REFERENCES</p>
       <div class="page-grid">
-        ${card('PAPER / WORLD MODELS', 'Genie: Generative Interactive Environments', 'Learning action-controllable worlds from video. This is the paper linked from my Diep-Genie prototype.', source.geniePaper, 'Read the paper')}
-        ${card('REFERENCE / GRIDWORLDS', 'MiniGrid', 'The gridworld environments used in my earlier Genie-style data collection prototype. The documentation covers environments, wrappers and examples.', source.minigrid, 'Open the documentation')}
+        ${card('PAPER / WORLD MODELS', 'Genie: Generative Interactive Environments', 'Learning action-controllable worlds from video.', source.geniePaper, 'Read the paper')}
+        ${card('REFERENCE / GRIDWORLDS', 'MiniGrid', 'Gridworld environments with documentation covering environments, wrappers and examples.', source.minigrid, 'Open the documentation')}
         ${card('BOOKMARK / MACHINE LEARNING', 'MLX', 'An array framework for Apple silicon, kept in my public GitHub stars.', source.mlx, 'Explore MLX')}
+        ${card('COLLECTION / GITHUB', 'The stars collection', 'Browse my current public collection of starred repositories.', source.stars, 'Browse starred repositories')}
         ${card('REFERENCE / THIS ATLAS', 'Explore the solar system', 'NASA’s guide to the planets is one of the reference sources for this solar system.', source.planets, 'Visit NASA')}
-      </div>
-      <p class="page-note">For the experiments these references connect to, see ${external(source.genieProject, 'Diep-Genie', '')} and ${external(source.minigridProject, 'the MiniGrid prototype', '')}.</p>`
+      </div>`
     },
     'posts': {
       planet: 'mars',
