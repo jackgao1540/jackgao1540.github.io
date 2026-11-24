@@ -3,20 +3,26 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#07151d"><meta name="description" content="Jack Gao’s projects, work, writing and favourite things.">
-<title>Jack Gao — Work in orbit</title>
+<title>Jack Gao — A collection in orbit</title>
+<script>if(location.hash && !/^#\/?$/.test(location.hash))document.documentElement.classList.add('direct-entry');</script>
 <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css">
 </head>
-<body>
+<body class="entering">
+<section class="entrance" id="entrance" aria-label="Welcome" data-stage="typing">
+<div class="entrance-copy"><h1><span class="sr-only">Jack Gao</span><span id="intro-name" aria-hidden="true"></span></h1><p><span class="sr-only">A collection of myself displayed in orbit.</span><span id="intro-sentence" aria-hidden="true"></span><span class="typing-caret" aria-hidden="true"></span></p></div>
+<button class="enter-orbit" id="enter-orbit" type="button" aria-label="Scroll down to enter the solar system" disabled><svg viewBox="0 0 32 20" aria-hidden="true"><path d="M3 3 16 16 29 3"/></svg></button>
+<canvas id="birth-canvas" aria-hidden="true"></canvas>
+<noscript><p class="entrance-noscript">Enable JavaScript to explore this solar system, or <a href="https://github.com/jackgao1540">visit my GitHub</a>.</p></noscript>
+</section>
 <a class="skip-link" href="#destinations">Skip to contents</a>
 <div class="universe" id="universe"><canvas id="solar-canvas" aria-label="Interactive solar system. Select a planet or open the table of contents." role="img"></canvas><div class="scene-vignette"></div></div>
 <header class="masthead"><a class="signature" href="#/" aria-label="Jack Gao home">Jack Gao</a><button class="contents-toggle" id="toggle-destinations" type="button" aria-expanded="false" aria-controls="contents-sidebar">Contents <span aria-hidden="true">☰</span></button></header>
 <main id="atlas">
-<section class="introduction" aria-labelledby="main-title"><h1 id="main-title">Work in <em>orbit.</em></h1><p class="instruction">Select a planet to explore</p></section>
+<section class="introduction" aria-label="Explore the solar system"><p class="instruction">Select a planet to explore</p></section>
 <div class="spatial-label" id="spatial-label" hidden></div>
 <section class="planet-detail" id="planet-detail" aria-live="polite" hidden></section>
 </main>
 <main id="page" hidden tabindex="-1"></main>
-<button id="skip-intro" class="skip-intro" type="button">Skip intro ↗</button>
 <div class="contents-shade" id="contents-shade" hidden></div>
 <aside class="contents-sidebar" id="contents-sidebar" role="dialog" aria-modal="true" aria-labelledby="contents-heading" hidden>
 <div class="contents-header"><h2 id="contents-heading">Contents</h2><button id="close-contents" type="button" aria-label="Close contents">✕</button></div>

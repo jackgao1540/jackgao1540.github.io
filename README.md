@@ -1,4 +1,4 @@
-# Jack Gao — Work in orbit
+# Jack Gao — A collection in orbit
 
 An interactive solar-system portfolio, published at **https://jackgao1540.github.io/**. The eight planets and dwarf planet Pluto lead to pages for posts, pictures, Diep Genie, work, projects, favourites, and planetary facts. Unfilled collections are explicitly marked as future content.
 
@@ -11,6 +11,8 @@ An interactive solar-system portfolio, published at **https://jackgao1540.github
 - **Layout, navigation, and fonts:** edit `index.html` and `style.css`. Fonts, Three.js, and visual assets are served locally.
 
 ## Explore
+
+The home page opens in a dark introduction: “Jack Gao” and “A collection of myself displayed in orbit.” type into view. Scroll down, swipe upward, press a down-navigation key, or activate the chevron to unfold the light animation and pull back from the Sun into the atlas. Reduced-motion visitors see the complete introduction and enter the overview without the burst or camera movement. Direct links to planets and articles bypass the introduction. `intro.js` controls this entrance; the Sun-to-overview camera path lives in `scene.js`.
 
 Click a body to approach it, then click its in-world plaque to open the topic. Hover or tap a moon for a short name cue; the selected view also supplies a screen-reader moon list. With a mouse or trackpad, scroll inward (negative vertical delta) over a body to approach it; scroll outward (positive delta) from a close-up to return to the overview. Scroll over empty space to adjust the general zoom. Click **Jack Gao** to return home and reset the view, including after free-space zoom. Scrolling inside Contents or an article scrolls its content normally.
 

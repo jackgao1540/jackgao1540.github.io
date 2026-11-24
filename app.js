@@ -1,4 +1,5 @@
 import { MOONS } from './moons.js';
+import { createEntrance } from './intro.js';
 const planets = [
  {id:'mercury',name:'Mercury',title:'Posts',slug:'posts',color:'#ada397',symbol:'☿',radius:'2,440 km',year:'88 Earth days',fact:'The smallest planet, and the closest to the Sun. Its cratered surface holds a record of ancient impacts.'},
  {id:'venus',name:'Venus',title:'Favourite pictures',slug:'pictures',color:'#dbb98d',symbol:'♀',radius:'6,052 km',year:'225 Earth days',fact:'Wrapped in thick clouds, Venus is the hottest planet in our solar system.'},
@@ -21,6 +22,11 @@ let fallback = false;
 let readySelection = null;
 let keyboardSelection = false;
 let fallbackTimer;
+const entrance = createEntrance({
+  reduced,
+  onEnter: () => { scene?.setSuspended?.(false); return scene?.playIntro(); },
+  onComplete: () => { scene?.setSuspended?.(false); announce('Select a planet to explore.'); }
+});
 if(reduced) document.body.classList.add('reduced-motion');
 const external=(url,label,cls='card-link')=>`<a class="${cls}" href="${url}" target="_blank" rel="noopener noreferrer">${label} <span aria-hidden="true">↗</span></a>`;
 const card=(meta,title,copy,url,label='Explore project')=>`<article class="content-card"><span class="card-meta">${meta}</span><h2>${title}</h2><p>${copy}</p>${url?external(url,label):''}</article>`;
@@ -196,7 +202,6 @@ function choosePlanet(id, writeRoute = true) {
     button.setAttribute('aria-pressed', String(button.dataset.planet === id));
   });
   hideDestination();
-  $('#skip-intro').hidden = true;
   scene?.skipIntro();
   scene?.focus(id);
   if (writeRoute && location.hash !== `#/planet/${id}`) {
@@ -232,7 +237,6 @@ function enter(id) {
 function renderFrame(frame) {
   moonFrame = frame;
   positionMoonName();
-  if (!frame.intro) $('#skip-intro').hidden = true;
   if (!selected || !$('#page').hidden) return;
   if (performance.now() - focusTime < (reduced ? 0 : 1250)) return;
   const projected = frame.labels?.find(label => label.id === selected);
@@ -278,7 +282,7 @@ function route({ initial = false } = {}) {
   $('#atlas').hidden = false;
   $('#page').hidden = true;
   document.body.classList.remove('is-page');
-  document.title = 'Jack Gao — Work in orbit';
+  document.title = 'Jack Gao — A collection in orbit';
   scene?.setPaused(paused);
   const match = path.match(/^planet\/(\w+)$/);
   if (match && byId[match[1]]) choosePlanet(match[1], false);
@@ -292,7 +296,6 @@ function enableFallback() {
   message.className = 'fallback-message';
   message.textContent = 'Open Contents to explore every destination.';
   $('#universe').append(message);
-  $('#skip-intro').hidden = true;
   if (selected) choosePlanet(selected, false);
 }
 
@@ -319,10 +322,6 @@ $('.signature').addEventListener('click', event => {
   overview();
   $('.signature').focus();
 });
-$('#skip-intro').addEventListener('click', () => {
-  scene?.skipIntro();
-  $('#skip-intro').hidden = true;
-});
 window.addEventListener('hashchange', () => route());
 window.addEventListener('popstate', () => route());
 window.addEventListener('keydown', event => {
@@ -344,6 +343,7 @@ window.addEventListener('keydown', event => {
 try {
   const { createSolarScene } = await import('./scene.js');
   scene = createSolarScene($('#solar-canvas'), {
+    suspended: entrance.active(),
     onSelect: id => id === 'sun' ? overview() : choosePlanet(id),
     onEnter: enter,
     onHoverMoon: identifyMoon,
@@ -358,3 +358,4 @@ try {
 }
 setPaused(paused);
 route({ initial: true });
+entrance.ready();
