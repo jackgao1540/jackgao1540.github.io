@@ -188,9 +188,6 @@ export function createSolarScene(canvas, options={}) {
   const belt=new THREE.InstancedMesh(rockGeo,rockMat,count),dummy=new THREE.Object3D();
   for(let i=0;i<count;i++){const a=rand()*TAU,r=14.0+rand()*2.1;dummy.position.set(Math.cos(a)*r,(rand()-.5)*.55,Math.sin(a)*r);const s=.016+rand()*.045;dummy.scale.set(s,s*(.6+rand()),s);dummy.rotation.set(rand()*3,rand()*3,rand()*3);dummy.updateMatrix();belt.setMatrixAt(i,dummy.matrix);}system.add(belt);
   // A sparse depth star field gives parallax without competing with the sky photograph.
-  const trailPositions=[];
-  for(let i=0;i<140;i++){const a=rand()*TAU,r=32+rand()*75,x=Math.cos(a)*r,y=Math.sin(a)*r*.7;trailPositions.push(x,y,-40,x*1.11,y*1.11,-10);}
-  const trails=new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(trailPositions,3)),new THREE.LineBasicMaterial({color:0x8cbccc,transparent:true,opacity:reduced?0:.7,depthWrite:false}));scene.add(trails);
   const starCount=mobile?650:1500,starPositions=new Float32Array(starCount*3),starColors=new Float32Array(starCount*3);
   for(let i=0;i<starCount;i++){const a=rand()*TAU,z=rand()*2-1,r=120+rand()*150,q=Math.sqrt(1-z*z);starPositions.set([Math.cos(a)*q*r,z*r,Math.sin(a)*q*r],i*3);const cool=rand();starColors.set([.65+cool*.35,.72+cool*.25,.85],i*3);}
   const starGeo=new THREE.BufferGeometry();starGeo.setAttribute('position',new THREE.BufferAttribute(starPositions,3));starGeo.setAttribute('color',new THREE.BufferAttribute(starColors,3));
@@ -198,11 +195,6 @@ export function createSolarScene(canvas, options={}) {
   starGeo.setAttribute('phase',new THREE.BufferAttribute(starPhase,1));
   const starMaterial=new THREE.ShaderMaterial({transparent:true,depthWrite:false,vertexColors:true,uniforms:{time:{value:0}},vertexShader:'attribute float phase;uniform float time;varying vec3 tint;varying float alpha;void main(){tint=color;alpha=.38+.22*sin(phase+time*(.7+phase*.08));vec4 p=modelViewMatrix*vec4(position,1.);gl_PointSize=1.1+.8*abs(sin(phase));gl_Position=projectionMatrix*p;}',fragmentShader:'varying vec3 tint;varying float alpha;void main(){float d=length(gl_PointCoord-.5);gl_FragColor=vec4(tint,alpha*smoothstep(.5,.05,d));}'});
   const stars=new THREE.Points(starGeo,starMaterial);scene.add(stars);
-  // Cassiopeia's restrained W: a real recognizable asterism, set apart from navigation.
-  const asterismPoints=[[-36,40,-150],[-29,46,-150],[-22,39,-150],[-15,45,-150],[-8,41,-150]].map(v=>new THREE.Vector3(...v));
-  const asterism=new THREE.Line(new THREE.BufferGeometry().setFromPoints(asterismPoints),new THREE.LineBasicMaterial({color:0x8ab6ca,transparent:true,opacity:.13,depthWrite:false}));
-  camera.add(asterism);scene.add(camera);
-  const asterismStars=new THREE.Points(new THREE.BufferGeometry().setFromPoints(asterismPoints),new THREE.PointsMaterial({color:0xb4d7dc,size:.24,transparent:true,opacity:.7,depthWrite:false}));camera.add(asterismStars);
   let onScreen=true,userYaw=0,userPitch=0,overviewZoom=1,focusZoom=1;
   let width=1,height=1,selected=null,hovered=null,paused=false,disposed=false,elapsed=0,frame=0,raf=0,last=performance.now(),introStart=last,intro=!reduced;
   let transition=1,transitionStart=last;
@@ -265,7 +257,7 @@ export function createSolarScene(canvas, options={}) {
   function click(e){if(down?.dragged){down=null;return;}down=null;const id=pick(e);const moon=entryCard.visible&&raycaster.intersectObject(entryCard)[0]?null:satellites.hit(raycaster,selected);if(moon){hoveredMoon=moon;options.onHoverMoon?.(moon);return;}if(id){raycaster.setFromCamera(pointer,camera);const hit=entryCard.visible&&raycaster.intersectObject(entryCard)[0];if(hit)options.onEnter?.(id);else options.onSelect?.(id);}}
   function leave(){hovered=null;hoveredMoon=null;options.onHover?.(null);options.onHoverMoon?.(null);}
   canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerdown',pointerdown);canvas.addEventListener('pointerup',click);canvas.addEventListener('pointerleave',leave);
-  function beginTransition(){trails.material.opacity=0;cameraStart.copy(camera.position);lookStart.copy(look);transition=0;transitionStart=performance.now();intro=false;}
+  function beginTransition(){cameraStart.copy(camera.position);lookStart.copy(look);transition=0;transitionStart=performance.now();intro=false;}
   function focus(id){if(!planets.has(id))return;userYaw=0;userPitch=0;selected=id;hoveredMoon=null;options.onHoverMoon?.(null);focusZoom=1;beginTransition();}
   function overview(){userYaw=0;userPitch=0;selected=null;hoveredMoon=null;options.onHoverMoon?.(null);overviewZoom=1;beginTransition();}
   function skipIntro(){intro=false;beginTransition();}
@@ -291,9 +283,9 @@ export function createSolarScene(canvas, options={}) {
     for(const p of PLANETS){const body=planets.get(p.id),a=p.phase+elapsed*.045*MOTION_RATE/p.period;body.group.position.copy(orbitPosition(p,a));if(!paused&&!reduced)body.mesh.rotation.y+=dt*MOTION_RATE*(p.id==='venus'?-.014:.035);}
     if(!paused&&!reduced){sun.rotation.y+=dt*.013*MOTION_RATE;belt.rotation.y+=dt*.002*MOTION_RATE;}
     satellites.update(elapsed*MOON_DAYS_PER_SECOND,selected,transition);
-    starMaterial.uniforms.time.value=elapsed;asterismStars.material.opacity=.52+.12*Math.sin(elapsed*.8);
+    starMaterial.uniforms.time.value=elapsed;
     target();
-    if(intro){const t=Math.min(1,(now-introStart)/2300),e=1-Math.pow(1-t,3);camera.position.lerpVectors(new THREE.Vector3(27,8,31),overviewPos,e);look.lerpVectors(new THREE.Vector3(8,0,2),overviewLook,e);trails.material.opacity=.65*Math.pow(1-t,2);if(t===1)intro=false;}
+    if(intro){const t=Math.min(1,(now-introStart)/2300),e=1-Math.pow(1-t,3);camera.position.lerpVectors(new THREE.Vector3(27,8,31),overviewPos,e);look.lerpVectors(new THREE.Vector3(8,0,2),overviewLook,e);if(t===1)intro=false;}
     else if(transition<1){transition=Math.min(1,(now-transitionStart)/(reduced?1:1250));const e=transition*transition*(3-2*transition);camera.position.lerpVectors(cameraStart,cameraGoal,e);look.lerpVectors(lookStart,lookGoal,e);}
     else if(reduced){camera.position.copy(cameraGoal);look.copy(lookGoal);}
     else {camera.position.lerp(cameraGoal,1-Math.exp(-dt*5));look.lerp(lookGoal,1-Math.exp(-dt*7));}
