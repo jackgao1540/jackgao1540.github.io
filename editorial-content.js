@@ -10,7 +10,7 @@ export const EDITORIAL_SOURCES = Object.freeze({
   instagram: 'https://www.instagram.com/jackgao1540/',
   howToChangeYourMind: 'https://www.google.com/search?kgmid=%2Fg%2F11f190d9vd&amp;q=how+to+change+your+mind+michael+pollan+how+to+change+your+mind%3A+what+the+new+science+of+psychedelics+teaches+us+about+consciousness%2C+dying%2C+addiction%2C+depression%2C+and+transcendence',
   michaelPollan: 'https://michaelpollan.com/books/how-to-change-your-mind/',
-  crimeAndPunishment: 'https://www.gutenberg.org/ebooks/2554',
+  crimeAndPunishment: 'https://standardebooks.org/ebooks/fyodor-dostoevsky/crime-and-punishment/constance-garnett',
   againstAllLikelihood: 'https://arxiv.org/html/2611.09385v1',
   genieProject: 'https://github.com/jackgao1540/Diep-Genie',
   geniePaper: 'https://arxiv.org/abs/2402.15391',
