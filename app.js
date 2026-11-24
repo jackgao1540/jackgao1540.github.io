@@ -17,11 +17,8 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let paused = reduced;
 let scene;
 let selected = null;
-let focusTime = 0;
-let fallback = false;
+let sceneUnavailable = false;
 let readySelection = null;
-let keyboardSelection = false;
-let fallbackTimer;
 const entrance = createEntrance({
   reduced,
   onEnter: () => { scene?.setSuspended?.(false); return scene?.playIntro(); },
@@ -106,7 +103,7 @@ function identifyMoon(moon) {
     if (moonPointerType !== 'touch') hideMoonName();
     return;
   }
-  if (!selected || moon.parent !== selected || !$('#page').hidden || document.body.classList.contains('contents-open')) return;
+  if (!$('#page').hidden || document.body.classList.contains('contents-open')) return;
   const changed = identifiedMoon?.id !== moon.id;
   identifiedMoon = moon;
   moonName.textContent = moon.name;
@@ -153,48 +150,49 @@ function hideDestination() {
 
 function renderDestination(planet) {
   const label = $('#spatial-label');
-  label.innerHTML = `<a aria-describedby="moon-summary" href="#/${planet.slug || 'about/' + planet.id}">
-      <span class="label-kicker">${planet.name.toUpperCase()}${planet.id === 'pluto' ? ' · DWARF PLANET' : ''}</span>
-      <span class="label-title">${planet.slug ? planet.title : 'Planet facts'}</span>
-      <span class="label-action">OPEN <span aria-hidden="true">↗</span></span>
-    </a>`;
+  label.innerHTML = `<span class="popup-name">${planet.name}</span><a class="popup-link" aria-describedby="moon-summary" href="#/${planet.slug || 'about/' + planet.id}">${planet.slug ? planet.title : 'Planet facts'} <span aria-hidden="true">↗</span></a>`;
 }
 
 function showDestination(planet, projected) {
   const label = $('#spatial-label');
+  if (!projected?.visible) { label.hidden = true; return; }
   if (readySelection !== planet.id) {
     renderDestination(planet);
     readySelection = planet.id;
+  }
+  label.hidden = false;
+  label.className = 'spatial-label planet-popup';
+  const gap=12,margin=12,top=innerWidth<=700?88:108,radius=Math.max(0,projected.radius||0);
+  const sideRoom=Math.max(innerWidth-margin-projected.x-radius-gap,projected.x-radius-gap-margin);
+  label.style.maxWidth=`${sideRoom>=84?Math.min(innerWidth<=700?160:220,sideRoom):innerWidth<=700?160:220}px`;
+  const box=label.getBoundingClientRect();
+  const candidates=[
+    {x:projected.x+radius+gap,y:projected.y-box.height/2},
+    {x:projected.x-radius-gap-box.width,y:projected.y-box.height/2},
+    {x:projected.x-box.width/2,y:projected.y+radius+gap},
+    {x:projected.x-box.width/2,y:projected.y-radius-gap-box.height}
+  ];
+  const fits=p=>p.x>=margin&&p.x+box.width<=innerWidth-margin&&p.y>=top&&p.y+box.height<=innerHeight-margin;
+  // Prefer an empty side, then above/below the disk. Only an all-surface view needs an inset edge.
+  const anchor=candidates.find(fits)||{x:innerWidth-box.width-margin,y:projected.y-box.height/2};
+  label.style.left=`${Math.round(Math.max(margin,Math.min(innerWidth-box.width-margin,anchor.x)))}px`;
+  label.style.top=`${Math.round(Math.max(top,Math.min(innerHeight-box.height-margin,anchor.y)))}px`;
 
-  }
-  {
-    label.hidden = false;
-    label.classList.add('scene-destination');
-    label.classList.toggle('near-surface', (projected?.radius || 0) > innerHeight * .3);
-    label.classList.toggle('fallback-destination', fallback);
-    const x = fallback ? innerWidth / 2 : projected?.x ?? innerWidth / 2;
-    const y = fallback
-      ? Math.min(innerHeight - label.offsetHeight - 24, innerHeight * .76)
-      : projected ? projected.y + (projected.radius || 45) * .65 : innerHeight * .42;
-    label.style.left = `${Math.max(130, Math.min(innerWidth - 130, x))}px`;
-    label.style.top = `${fallback ? Math.max(96, y) : Math.max(115, Math.min(innerHeight - 240, y))}px`;
-    if (keyboardSelection) {
-      label.querySelector('a').focus({ preventScroll: true });
-      keyboardSelection = false;
-    }
-  }
+}
+
+function showStaticDestination(planet) {
+  showDestination(planet, {x:innerWidth/2,y:innerHeight/2,radius:0,visible:true});
+  $('#spatial-label').classList.add('renderer-unavailable');
 }
 
 function choosePlanet(id, writeRoute = true) {
   const planet = byId[id];
   if (!planet) return;
-  clearTimeout(fallbackTimer);
   hideMoonName();
   selected = id;
   const names = MOONS.filter(moon => moon.parent === id).map(moon => moon.name);
   moonSummary.textContent = names.length ? 'Moons in this view: ' + names.join(', ') + '.' : 'No natural moons.';
   readySelection = null;
-  focusTime = performance.now();
   document.body.classList.add('focused');
   setIndexOpen(false);
 
@@ -207,17 +205,11 @@ function choosePlanet(id, writeRoute = true) {
   if (writeRoute && location.hash !== `#/planet/${id}`) {
     history.pushState(null, '', `#/planet/${id}`);
   }
-  announce(`${planet.name} selected. ${planet.slug ? 'Open ' + planet.title + ' when the close-up arrives.' : planet.fact}`);
-  if (fallback) {
-    // No animation dependency: deep links and button selection use the same path.
-    fallbackTimer = setTimeout(() => {
-      if (selected === id && $('#page').hidden) showDestination(planet);
-    }, reduced ? 0 : 160);
-  }
+  announce(`${planet.name} selected. ${planet.slug ? planet.title : 'Planet facts'} is available in its popup.`);
+  if (sceneUnavailable) showStaticDestination(planet);
 }
 
 function overview(writeRoute = true, preserveIntro = false) {
-  clearTimeout(fallbackTimer);
   selected = null;
   hideMoonName();
   moonSummary.textContent = '';
@@ -226,19 +218,14 @@ function overview(writeRoute = true, preserveIntro = false) {
   hideDestination();
   document.querySelectorAll('[data-planet]').forEach(button => button.setAttribute('aria-pressed', 'false'));
   if (!preserveIntro) scene?.overview();
-  if (writeRoute) location.hash = '/';
-}
-
-function enter(id) {
-  const planet = byId[id];
-  if (planet) location.hash = '/' + (planet.slug || 'about/' + id);
+  if (writeRoute && location.hash !== '#/') history.pushState(null, '', '#/');
 }
 
 function renderFrame(frame) {
   moonFrame = frame;
   positionMoonName();
   if (!selected || !$('#page').hidden) return;
-  if (performance.now() - focusTime < (reduced ? 0 : 1250)) return;
+  if (frame.focus !== selected || frame.intro) { $('#spatial-label').hidden = true; return; }
   const projected = frame.labels?.find(label => label.id === selected);
   if (!projected?.visible) {
     $('#spatial-label').hidden = true;
@@ -255,7 +242,6 @@ function renderPage(path, page) {
   $('#atlas').hidden = true;
   $('#page').hidden = false;
   document.body.classList.add('is-page');
-  document.title = `${page.title} — Jack Gao`;
   $('#page').innerHTML = `
     <a class="back-link" href="#/planet/${planet.id}">← <span>BACK TO ${planet.name.toUpperCase()}</span></a>
     <header class="page-heading"><div>
@@ -282,7 +268,6 @@ function route({ initial = false } = {}) {
   $('#atlas').hidden = false;
   $('#page').hidden = true;
   document.body.classList.remove('is-page');
-  document.title = 'Jack Gao — A collection in orbit';
   scene?.setPaused(paused);
   scene?.setSuspended?.(entrance.active());
   const match = path.match(/^planet\/(\w+)$/);
@@ -290,9 +275,9 @@ function route({ initial = false } = {}) {
   else overview(false, initial);
 }
 
-function enableFallback() {
-  if (fallback) return;
-  fallback = true;
+function enableFallback(unavailable = false) {
+  if (!unavailable || sceneUnavailable) return;
+  sceneUnavailable = true;
   const message = document.createElement('p');
   message.className = 'fallback-message';
   message.textContent = 'Open Contents to explore every destination.';
@@ -346,17 +331,18 @@ try {
   scene = createSolarScene($('#solar-canvas'), {
     suspended: entrance.active(),
     onSelect: id => id === 'sun' ? overview() : choosePlanet(id),
-    onEnter: enter,
     onHoverMoon: identifyMoon,
     onOverview: () => overview(),
     onHover: id => { document.body.style.cursor = id ? 'pointer' : ''; },
     onFrame: renderFrame,
-    onReady: result => { if (result?.webgl === false) enableFallback(); }
+    onReady: result => { if (result?.webgl === false) enableFallback(result.available === false); }
   });
 } catch (error) {
   console.error('Solar scene unavailable', error);
-  enableFallback();
+  enableFallback(true);
 }
 setPaused(paused);
 route({ initial: true });
 entrance.ready();
+
+window.addEventListener('resize', () => { if (sceneUnavailable && selected && $('#page').hidden) showStaticDestination(byId[selected]); });

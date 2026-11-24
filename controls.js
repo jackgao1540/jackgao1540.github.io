@@ -23,7 +23,8 @@ export function bindOrbitGestures({ canvas, isActive, onDrag, onZoom, onTap, onH
     pointer.x = event.clientX; pointer.y = event.clientY;
     if (pointers.size > 1) {
       const next = separation();
-      if (next > 8 && distance > 8) onZoom(Math.log(distance / next) / .002);
+      const [a,b] = [...pointers.values()];
+      if (next > 8 && distance > 8) onZoom(Math.log(distance / next) / .002, {clientX:(a.x+b.x)/2,clientY:(a.y+b.y)/2});
       distance = next; return;
     }
     if (Math.hypot(pointer.x - pointer.startX, pointer.y - pointer.startY) > 5) dragged = true;
