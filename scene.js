@@ -280,9 +280,10 @@ export function createSolarScene(canvas, options={}) {
   }
   const releasePolicy=createReleasePolicy(canvas);
   function releaseIfSmall(){
+    if(!selected||!outwardArmed)return;
     const {vertical,cutoff,rotated}=releasePolicy(width);
     if(rotated)outwardArmed=false;
-    if(!selected||!outwardArmed)return;
+    if(!outwardArmed)return;
     const body=planets.get(selected);
     if(globeExtent(body,vertical)<cutoff){releaseAnchor(true);return;}
     const requested=Math.max(minFocusDistance(),focusBaseDistance*focusZoom);
@@ -526,6 +527,7 @@ function createFallback(canvas,options) {
     try{if(options.onOverview)options.onOverview();else overview();}finally{continuousSelection=false;keepReleaseView=false;}
   }
   function releaseIfSmall(width){
+    if(!selected||!outwardArmed)return;
     const {cutoff,rotated}=releasePolicy(width);
     if(rotated)outwardArmed=false;
     const body=points.find(p=>p.id===selected);
