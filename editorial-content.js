@@ -11,12 +11,7 @@ export const EDITORIAL_SOURCES = Object.freeze({
   howToChangeYourMind: 'https://www.google.com/search?kgmid=%2Fg%2F11f190d9vd&amp;q=how+to+change+your+mind+michael+pollan+how+to+change+your+mind%3A+what+the+new+science+of+psychedelics+teaches+us+about+consciousness%2C+dying%2C+addiction%2C+depression%2C+and+transcendence',
   michaelPollan: 'https://michaelpollan.com/books/how-to-change-your-mind/',
   crimeAndPunishment: 'https://standardebooks.org/ebooks/fyodor-dostoevsky/crime-and-punishment/constance-garnett',
-  againstAllLikelihood: 'https://arxiv.org/html/2611.09385v1',
-  geniePaper: 'https://arxiv.org/abs/2402.15391',
-  minigrid: 'https://minigrid.farama.org/',
-  mlx: 'https://github.com/ml-explore/mlx',
-  stars: 'https://github.com/jackgao1540?tab=stars',
-  planets: 'https://science.nasa.gov/solar-system/planets/'
+  againstAllLikelihood: 'https://arxiv.org/html/2611.09385v1'
 });
 
 export function createEditorialPages({ card, external, orbitArt }) {
@@ -46,14 +41,6 @@ export function createEditorialPages({ card, external, orbitArt }) {
       <p class="page-eyebrow">LIKED MEDIA</p>
       <div class="page-grid">
         ${card('PAPER', 'Against All Likelihood', 'David Lopez-Paz', source.againstAllLikelihood, 'Read the paper · v1')}
-      </div>
-      <p class="page-eyebrow">REFERENCES</p>
-      <div class="page-grid">
-        ${card('PAPER / WORLD MODELS', 'Genie: Generative Interactive Environments', 'Learning action-controllable worlds from video.', source.geniePaper, 'Read the paper')}
-        ${card('REFERENCE / GRIDWORLDS', 'MiniGrid', 'Gridworld environments with documentation covering environments, wrappers and examples.', source.minigrid, 'Open the documentation')}
-        ${card('BOOKMARK / MACHINE LEARNING', 'MLX', 'An array framework for Apple silicon, kept in my public GitHub stars.', source.mlx, 'Explore MLX')}
-        ${card('COLLECTION / GITHUB', 'The stars collection', 'Browse my current public collection of starred repositories.', source.stars, 'Browse starred repositories')}
-        ${card('REFERENCE / THIS ATLAS', 'Explore the solar system', 'NASA’s guide to the planets is one of the reference sources for this solar system.', source.planets, 'Visit NASA')}
       </div>`
     },
     'posts': {
