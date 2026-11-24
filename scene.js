@@ -6,6 +6,7 @@ import {createMoonSystems,createMoonTexture,moonColor,moonDisplayLayout,moonPosi
 
 const TAU = Math.PI * 2;
 const MOTION_RATE = 2; // Orbital and axial motion only; camera, gestures and twinkle keep their original timing.
+const SUN_BODY={id:'sun',radius:3.13,tilt:0};
 // Radius and orbital distances are deliberately compressed for legibility.
 // Periods preserve the real ratios, while a user-controlled clock advances them.
 export const PLANETS = [
@@ -19,6 +20,7 @@ export const PLANETS = [
   { id:'neptune', eccentricity:.0113, inclination:1.77, radius:1.02, orbit:35.3, period:164.8, phase:5.42, color:'#476fd0', tilt:.494 },
   { id:'pluto', type:'dwarf planet', eccentricity:.2488, inclination:17.16, radius:.29, orbit:42, period:248, phase:5.9, color:'#cfbca7', tilt:2.13 },
 ];
+const bodyConfig=id=>id==='sun'?SUN_BODY:PLANETS.find(body=>body.id===id);
 
 function orbitPosition(p,meanAnomaly){
   // Kepler's equation gives genuine period ratios and variable orbital speed.
@@ -41,7 +43,7 @@ export function createWheelNavigator({isActive,height,pick,selected,onEnter,onZo
     if(!Number.isFinite(raw)||raw===0)return;
     event.preventDefault();
     const delta=Math.max(-160,Math.min(160,raw));
-    if(delta<0&&!selected()){const id=pick(event);if(id&&id!=='sun')onEnter(id);}
+    if(delta<0&&!selected()){const id=pick(event);if(id)onEnter(id);}
     onZoom(delta,event);
   };
 }
@@ -151,7 +153,7 @@ export function createSolarScene(canvas, options={}) {
   const fill=new THREE.DirectionalLight(0xa8bfd6,.92);fill.position.set(10,16,30);scene.add(fill);
   const planets=new Map(),pickables=[],orbitLines=[];
   const sunMap=surfaceTexture('sun');
-  const sun=new THREE.Mesh(new THREE.SphereGeometry(3.13,40,28),new THREE.ShaderMaterial({uniforms:{surface:{value:sunMap}},vertexShader:'varying vec2 vUv; varying vec3 n; varying vec3 v; void main(){vUv=uv;vec4 p=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);v=normalize(-p.xyz);gl_Position=projectionMatrix*p;}',fragmentShader:'uniform sampler2D surface;varying vec2 vUv;varying vec3 n;varying vec3 v;void main(){float limb=.63+.37*pow(max(0.,dot(normalize(n),normalize(v))),.45);vec3 color=texture2D(surface,vUv).rgb;gl_FragColor=vec4(color*limb*1.12,1.);}'}));sun.userData.id='sun';system.add(sun);pickables.push(sun);planets.set('sun',{mesh:sun,group:sun,radius:3.13,config:{id:'sun'}});
+  const sun=new THREE.Mesh(new THREE.SphereGeometry(3.13,40,28),new THREE.ShaderMaterial({uniforms:{surface:{value:sunMap}},vertexShader:'varying vec2 vUv; varying vec3 n; varying vec3 v; void main(){vUv=uv;vec4 p=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);v=normalize(-p.xyz);gl_Position=projectionMatrix*p;}',fragmentShader:'uniform sampler2D surface;varying vec2 vUv;varying vec3 n;varying vec3 v;void main(){float limb=.63+.37*pow(max(0.,dot(normalize(n),normalize(v))),.45);vec3 color=texture2D(surface,vUv).rgb;gl_FragColor=vec4(color*limb*1.12,1.);}'}));sun.userData.id='sun';system.add(sun);pickables.push(sun);planets.set('sun',{mesh:sun,group:sun,radius:3.13,config:SUN_BODY});
   const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture(),color:0xffdf91,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));glow.scale.set(22,22,1);system.add(glow);
   const corona=atmosphere(3.13,0xffe5a0,.44);system.add(corona);
   const sunHalo=new THREE.Mesh(new THREE.SphereGeometry(3.18,32,20),new THREE.MeshBasicMaterial({color:0xffe8ae,transparent:true,opacity:.015,side:THREE.BackSide}));system.add(sunHalo);
@@ -274,7 +276,7 @@ export function createSolarScene(canvas, options={}) {
   function zoomBy(delta,event){
     if(intro)skipIntro();
     if(delta<0)outwardArmed=false;
-    if(!selected&&delta<0&&event){const id=pick(event);if(id&&id!=='sun')approach(id);}
+    if(!selected&&delta<0&&event){const id=pick(event);if(id)approach(id);}
     const factor=Math.exp(delta*.002);
     if(selected){
       if(delta>0)outwardArmed=desktopPointer();
@@ -345,7 +347,7 @@ export function createSolarScene(canvas, options={}) {
       const follow=1-THREE.MathUtils.smoothstep(altitude,.025,.06);
       if(follow>0){
         spinAxis.set(-Math.sin(p.config.tilt||0),Math.cos(p.config.tilt||0),0);
-        const spin=dt*MOTION_RATE*(selected==='venus'?-.014:.035)*follow;
+        const spin=dt*MOTION_RATE*(selected==='sun' ? .013 : selected==='venus' ? -.014 : .035)*follow;
         surfaceStep.setFromAxisAngle(spinAxis,spin);surfaceRotation.premultiply(surfaceStep).normalize();
       }
     }
@@ -411,7 +413,7 @@ function createFallback(canvas,options) {
     if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch;pixelSky.resize(r.width,r.height);}
     c.setTransform(cw/r.width,0,0,ch/r.height,0,0);c.imageSmoothingEnabled=false;const w=r.width,h=r.height;c.clearRect(0,0,w,h);
     if(introStart!==null)renderZoom=zoom;else renderZoom+=(zoom-renderZoom)*(reduced?1:.22);
-    if(selected){const p=PLANETS.find(p=>p.id===selected);worldTarget.copy(orbitPosition(p,p.phase+elapsed*.045*MOTION_RATE/p.period));}
+    if(selected){const p=bodyConfig(selected);if(p.id==='sun')worldTarget.set(0,0,0);else worldTarget.copy(orbitPosition(p,p.phase+elapsed*.045*MOTION_RATE/p.period));}
     else worldTarget.copy(freeLook);
     viewLook.lerp(worldTarget,reduced||renderZoom<.08?1:.16);
     const scale=Math.min(w/100,h/68)/renderZoom,ox=w*.48+panX,oy=h*.52+panY;
@@ -510,8 +512,8 @@ function createFallback(canvas,options) {
   }
   function zoomBy(delta,event){
     if(delta<0)outwardArmed=false;
-    if(!selected&&delta<0&&event){const id=pick(event);if(id&&id!=='sun')approach(id);}
-    const r=canvas.getBoundingClientRect(),base=Math.min(r.width/100,r.height/68),p=PLANETS.find(p=>p.id===selected);
+    if(!selected&&delta<0&&event){const id=pick(event);if(id)approach(id);}
+    const r=canvas.getBoundingClientRect(),base=Math.min(r.width/100,r.height/68),p=bodyConfig(selected);
     const minimum=p?p.radius*base/(Math.max(r.width,r.height)*32):.00001;
     const body=points.find(body=>body.id===selected);
     if(delta>0&&desktopPointer()&&body&&body.r*2<r.width*.1)zoom=Math.max(zoom,renderZoom);
@@ -520,7 +522,7 @@ function createFallback(canvas,options) {
     draw();
   }
   function dragGain(){
-    const r=canvas.getBoundingClientRect(),p=PLANETS.find(p=>p.id===selected);
+    const r=canvas.getBoundingClientRect(),p=bodyConfig(selected);
     const radius=p?p.radius*Math.min(r.width/100,r.height/68)/renderZoom:0,oldLimit=Math.max(r.width,r.height)*2;
     const blend=THREE.MathUtils.smoothstep(radius,oldLimit,oldLimit*2);
     const inspection=radius?Math.min(1,TAU/(radius*.008)):1;
@@ -532,7 +534,7 @@ function createFallback(canvas,options) {
   },onZoom:zoomBy,onTap:click,onHover:move,onLeave:()=>options.onHoverMoon?.(null)});
   function stopIntro(){introStart=null;introResolve?.();introResolve=null;}
   function focus(id){
-    const p=PLANETS.find(p=>p.id===id);if(!p)return;stopIntro();selected=id;outwardArmed=false;options.onHoverMoon?.(null);
+    const p=bodyConfig(id);if(!p)return;stopIntro();selected=id;outwardArmed=false;options.onHoverMoon?.(null);
     if(!continuousSelection){const r=canvas.getBoundingClientRect();zoom=Math.min(zoom,Math.min(r.width/100,r.height/68)*p.radius/(Math.min(r.width,r.height)*.16));}
     draw();
   }

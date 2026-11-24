@@ -1,10 +1,10 @@
 # Jack Gao — A collection in orbit
 
-An interactive solar-system portfolio, published at **https://jackgao1540.github.io/**. The eight planets and dwarf planet Pluto lead to pages for posts, pictures, Diep Genie, work, projects, favourites, and planetary facts. Unfilled collections are explicitly marked as future content.
+An interactive solar-system portfolio, published at **https://jackgao1540.github.io/**. Contents highlights **Sun / About me**, **Jupiter / Projects**, **Mercury / Reads & resources**, and **Mars / Posts**, in that order. Saturn opens Work experience in the scene. Every other planet remains selectable, with the existing pictures, Diep Genie and planetary-fact routes preserved. Unfilled collections are explicitly marked as future content.
 
 ## Edit the atlas
 
-- **Destination names, planet facts, and page content:** edit `planets` and `pages` near the top of `app.js`. Give a planet a `slug` and matching `pages` entry to add its destination. Hash routes such as `#/diep-genie` work on static hosting and refresh safely.
+- **Destination names, planet facts, and routes:** edit `planets` and `pages` in `app.js`. `contentsBodies` controls the four-item directory and next-page sequence. Sun, Mercury and Mars page content lives in `editorial-content.js`; Saturn's resume-style employment history lives in `work-history.js`. Existing `#/posts`, `#/work` and `#/favourites` links retain their URLs, while Sun uses `#/about-me`. Hash routes work on static hosting and refresh safely.
 - **Moon catalogue:** edit `moons.js` for selected satellite measurements and source links; `moon-renderer.js` controls their display layout, materials, frame transforms and clock. The atlas keeps a representative major-moon roster in the shared world, not every known satellite. See the moon section in `ASSET-CREDITS.md` for reference planes, presentation scales, and date limitations.
 - **Bodies, orbit placement, camera motion, and materials:** edit `PLANETS` and the scene functions in `scene.js`. The scene uses Three.js, with a 2D fallback when WebGL is unavailable. Sizes and distances are compressed for exploration.
 - **Contents sidebar:** use the top-right Contents button on any page to open the destination list. It remains hidden until requested and supports keyboard navigation and native scrolling.
