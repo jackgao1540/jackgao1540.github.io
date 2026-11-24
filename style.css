@@ -49,3 +49,36 @@
 .spatial-label.fallback-destination .label-kicker{margin-bottom:6px}
 .spatial-label.fallback-destination .label-title{font-size:28px}
 .spatial-label.fallback-destination .label-action{margin-top:12px}
+/* A visitor-led entrance, painted before the atlas can appear. */
+body.entering{overflow:hidden;background:#010207}
+body.entering .universe{visibility:hidden}
+body.entering .masthead,body.entering #atlas,body.entering #page,body.entering>.skip-link{visibility:hidden;opacity:0}
+html.direct-entry body.entering .universe,html.direct-entry body.entering .masthead,html.direct-entry body.entering #atlas,html.direct-entry body.entering #page,html.direct-entry body.entering>.skip-link{visibility:visible;opacity:1}
+html.direct-entry .entrance{display:none}
+.entrance{position:fixed;inset:0;z-index:200;background:#010207;overflow:hidden;isolation:isolate;transition:background .25s ease}
+.entrance-copy{position:absolute;left:24px;right:24px;top:43%;transform:translateY(-50%);text-align:center;z-index:2;transition:opacity .3s ease,filter .4s ease,transform .5s ease}
+.entrance-copy h1{font-family:var(--serif);font-size:clamp(76px,10vw,150px);line-height:1.12;font-weight:400;letter-spacing:-.035em;margin:0 0 24px;color:#f4f0e6;text-shadow:0 0 18px #fff1cb38,0 0 58px #b3c6f124;min-height:1.12em}
+.entrance-copy p{font-family:var(--serif);font-size:clamp(21px,2.3vw,32px);line-height:1.5;font-weight:400;color:#c5cdd8;margin:0 auto;max-width:680px;min-height:1.5em;text-shadow:0 0 20px #d6e7ff52}
+.entrance-copy span:not(.typing-caret){animation:emerge 1.6s ease both}
+.typing-caret{display:inline-block;width:1px;height:.8em;margin-left:5px;background:#f3e6c9;box-shadow:0 0 10px #fff0bb;animation:caret .55s step-end infinite}
+.entrance:not([data-stage="typing"]) .typing-caret{opacity:0;animation:none}
+.enter-orbit{position:absolute;left:50%;bottom:max(11%,45px);transform:translateX(-50%);display:flex;align-items:center;justify-content:center;min-width:170px;min-height:88px;padding:16px 24px;opacity:0;visibility:hidden;transition:opacity .65s ease;z-index:3;color:#d2d8dd}
+.enter-orbit svg{width:27px;height:18px;fill:none;stroke:#e8e9dc;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px #e1edff65)}
+.entrance[data-stage="waiting"] .enter-orbit{opacity:1;visibility:visible}
+.entrance[data-stage="waiting"] .enter-orbit svg{animation:beckon 2.3s ease-in-out infinite}
+.enter-orbit:hover svg{stroke:#fff7dc}
+#birth-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;z-index:1}
+.entrance[data-stage="burst"] .entrance-copy,.entrance[data-stage="zoom"] .entrance-copy{opacity:0;filter:blur(9px);transform:translateY(-50%) scale(1.02)}
+.entrance[data-stage="burst"] #birth-canvas{opacity:1}
+.entrance[data-stage="zoom"]{background:transparent}
+.entrance[data-stage="zoom"] #birth-canvas{opacity:0;transition:opacity .9s ease-out}
+body.entering:has(.entrance[data-stage="zoom"]) .universe{visibility:visible}
+.entrance-noscript{position:absolute;bottom:10%;left:10%;right:10%;text-align:center;line-height:1.8;color:var(--muted)}
+.entrance-noscript a{text-decoration:underline}
+.introduction{left:50%;top:auto;bottom:8%;transform:translateX(-50%);max-width:none;text-align:center;white-space:nowrap}
+.focused .introduction{transform:translate(-50%,10px)}
+@keyframes emerge{from{opacity:0;filter:blur(7px)}to{opacity:1;filter:blur(0)}}
+@keyframes caret{50%{opacity:0}}
+@keyframes beckon{0%,100%{transform:translateY(-3px);opacity:.35;filter:drop-shadow(0 0 2px #d6e9ff30)}50%{transform:translateY(5px);opacity:1;filter:drop-shadow(0 0 9px #e1edffb0)}}
+@media(max-width:700px){.entrance-copy{left:28px;right:28px;top:42%}.entrance-copy h1{font-size:clamp(70px,18vw,100px);margin-bottom:24px}.entrance-copy p{font-size:23px;max-width:310px;min-height:3em}.enter-orbit{bottom:12%;gap:22px}.introduction{left:50%;top:auto;max-width:none;bottom:7%}.instruction{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.entrance-copy span:not(.typing-caret){opacity:1;filter:none}.enter-orbit svg{opacity:.85}.typing-caret{display:none}}
