@@ -1,6 +1,7 @@
 // Pointer capture keeps a gesture coherent across the canvas edges and UI layers.
 export function bindOrbitGestures({ canvas, isActive, onDrag, onZoom, onTap, onHover, onLeave }) {
   const pointers = new Map();
+  const document = canvas.ownerDocument, window = document?.defaultView;
   let dragged = false, pinched = false, distance = 0;
   const separation = () => { const [a, b] = [...pointers.values()]; return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0; };
   function down(event) {
@@ -14,6 +15,8 @@ export function bindOrbitGestures({ canvas, isActive, onDrag, onZoom, onTap, onH
   function move(event) {
     const pointer = pointers.get(event.pointerId);
     if (!pointer) { if (isActive()) onHover?.(event); return; }
+    // A release beyond the browser can arrive without pointerup/capture loss.
+    if (event.pointerType !== 'touch' && event.buttons === 0) { cancel(event); return; }
     if (!isActive()) { cancel(event); return; }
     event.preventDefault();
     const dx = event.clientX - pointer.x, dy = event.clientY - pointer.y;
@@ -37,6 +40,13 @@ export function bindOrbitGestures({ canvas, isActive, onDrag, onZoom, onTap, onH
   }
   const up = event => finish(event, true);
   const cancel = event => finish(event, false);
+  const outsideUp = event => { if (event.target !== canvas) cancel(event); };
+  function reset() {
+    const ids = [...pointers.keys()]; pointers.clear();
+    for (const id of ids) if (canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
+    canvas.style.cursor = 'grab'; onLeave?.();
+  }
+  const visibility = () => { if (document.hidden) reset(); };
   const leave = () => { if (!pointers.size) onLeave?.(); };
   canvas.addEventListener('pointerdown', down);
   canvas.addEventListener('pointermove', move);
@@ -44,11 +54,18 @@ export function bindOrbitGestures({ canvas, isActive, onDrag, onZoom, onTap, onH
   canvas.addEventListener('pointercancel', cancel);
   canvas.addEventListener('lostpointercapture', cancel);
   canvas.addEventListener('pointerleave', leave);
+  window?.addEventListener('pointerup', outsideUp, true);
+  window?.addEventListener('pointercancel', cancel, true);
+  window?.addEventListener('blur', reset);
+  document?.addEventListener('visibilitychange', visibility);
   return () => {
-    for (const id of pointers.keys()) if (canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
-    pointers.clear();
+    reset();
     canvas.removeEventListener('pointerdown', down); canvas.removeEventListener('pointermove', move);
     canvas.removeEventListener('pointerup', up); canvas.removeEventListener('pointercancel', cancel);
     canvas.removeEventListener('lostpointercapture', cancel); canvas.removeEventListener('pointerleave', leave);
+    window?.removeEventListener('pointerup', outsideUp, true);
+    window?.removeEventListener('pointercancel', cancel, true);
+    window?.removeEventListener('blur', reset);
+    document?.removeEventListener('visibilitychange', visibility);
   };
 }
