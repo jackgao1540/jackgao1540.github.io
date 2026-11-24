@@ -1,3 +1,4 @@
+import {sealLongitude} from './pixel-renderer.js';
 import * as THREE from './assets/vendor/three.module.js';
 import { MOONS } from './moons.js';
 
@@ -88,7 +89,8 @@ export function createMoonTexture(moon){
   if(moon.id==='iapetus'){c.fillStyle='rgba(44,35,27,.75)';c.beginPath();c.ellipse(w*.7,h*.5,w*.3,h*.65,0,0,TAU);c.fill();}
   if(moon.id==='charon'){c.fillStyle='rgba(104,57,44,.62)';c.fillRect(0,0,w,42);c.fillStyle='rgba(213,212,204,.3)';c.fillRect(0,h*.55,w,h*.16);}
   if(moon.id==='mimas'){c.strokeStyle='rgba(61,65,64,.5)';c.lineWidth=4;c.beginPath();c.ellipse(w*.32,h*.48,28,23,0,0,TAU);c.stroke();}
-  const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=1;return map;
+  sealLongitude(c,w,h);
+  const map=new THREE.CanvasTexture(canvas);map.wrapS=THREE.RepeatWrapping;map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=1;return map;
 }
 
 export function createMoonSystems(planets){

@@ -1,6 +1,6 @@
 import * as THREE from './assets/vendor/three.module.js';
 import {bindOrbitGestures} from './controls.js';
-import {pixelSize,createPixelSky} from './pixel-renderer.js';
+import {pixelSize,createPixelSky,sealLongitude} from './pixel-renderer.js';
 import {createMoonSystems,createMoonTexture,moonDisplayLayout,moonPosition,MOON_DAYS_PER_SECOND} from './moon-renderer.js';
 
 const TAU = Math.PI * 2;
@@ -127,7 +127,8 @@ function surfaceTexture(id) {
     // Fine-scale surface detail remains visible when a planet is approached.
     const pixels=c.getImageData(0,0,w,h);for(let i=0;i<pixels.data.length;i+=4){const grain=(random()-.5)*11;pixels.data[i]+=grain;pixels.data[i+1]+=grain;pixels.data[i+2]+=grain;}c.putImageData(pixels,0,0);
   });
-  if(['jupiter','saturn','venus','uranus','neptune'].includes(id))texture.wrapS=THREE.RepeatWrapping;
+  sealLongitude(texture.image.getContext('2d'),texture.image.width,texture.image.height);
+  texture.wrapS=THREE.RepeatWrapping;
   return texture;
 }
 function atmosphere(radius,color,intensity=.7) {
@@ -176,7 +177,7 @@ export function createSolarScene(canvas, options={}) {
     mesh.userData.id=p.id;axis.add(mesh);pickables.push(mesh);
     if(p.id==='earth'){
       axis.add(atmosphere(p.radius,0x4ca5ff,.95));
-      new THREE.TextureLoader().load('./assets/space/earth-nasa.webp',map=>{map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=1;mesh.material.map.dispose();mesh.material.map=map;mesh.material.needsUpdate=true;},undefined,()=>{});
+      new THREE.TextureLoader().load('./assets/space/earth-nasa.webp',map=>{map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=1;map.wrapS=THREE.RepeatWrapping;mesh.material.map.dispose();mesh.material.map=map;mesh.material.needsUpdate=true;},undefined,()=>{});
       const clouds=canvasTexture(1024,512,(c,w,h)=>{const r=seeded(411);for(let i=0;i<170;i++){const x=r()*w,y=r()*h;c.fillStyle=`rgba(255,255,255,${r()*.16})`;c.beginPath();c.ellipse(x,y,r()*85+10,r()*6+2,-.2,0,TAU);c.fill();}});
       const cloudMesh=new THREE.Mesh(new THREE.SphereGeometry(p.radius*1.012,32,20),new THREE.MeshStandardMaterial({map:clouds,transparent:true,opacity:.55,depthWrite:false}));axis.add(cloudMesh);
     }
@@ -369,8 +370,9 @@ function createFallback(canvas,options) {
       }
       if(p.id==='saturn'){c.strokeStyle='#cbb88d';c.lineWidth=pr*.4;c.beginPath();c.ellipse(x,y,pr*2.2,pr*.6,-.4,0,TAU);c.stroke();}
       c.save();c.beginPath();c.arc(x,y,pr,0,TAU);c.clip();
-      const map=maps.get(p.id),shift=((userYaw/TAU%1)+1)%1*pr*2,vertical=((userPitch/Math.PI%1)+1)%1*pr*2;
-      for(let row=0;row<2;row++)for(let column=0;column<2;column++)c.drawImage(map,x-pr-shift+column*pr*2,y-pr-vertical+row*pr*2,pr*2,pr*2);
+      const map=maps.get(p.id),shift=((userYaw/TAU%1)+1)%1*pr*2,latitude=Math.sin(userPitch),stretch=1+Math.abs(latitude)*.5;
+      // Longitude wraps; latitude crops toward a pole instead of joining north to south.
+      for(let column=0;column<2;column++)c.drawImage(map,x-pr-shift+column*pr*2,y-pr*stretch+latitude*pr*.35,pr*2,pr*2*stretch);
       const shade=c.createLinearGradient(x-pr,y-pr,x+pr,y+pr);shade.addColorStop(0,'rgba(255,248,217,.08)');shade.addColorStop(.55,'rgba(0,7,16,.04)');shade.addColorStop(1,'rgba(0,7,16,.86)');c.fillStyle=shade;c.fillRect(x-pr,y-pr,pr*2,pr*2);c.restore();points.push({id:p.id,x,y,r:pr});for(const moon of visibleMoons)if(moon.depth>=0)drawMoon(moon);
     }
     options.onFrame?.({labels:points.map(p=>({id:p.id,x:p.x,y:p.y,radius:p.r,visible:true})),focus:selected,paused,intro:introStart!==null,transition:1,moons:moonPoints.map(m=>({id:m.moon.id,name:m.moon.name,parent:m.moon.parent,x:m.x,y:m.y,radius:m.radius,visible:true}))});
